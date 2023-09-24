@@ -1,0 +1,27 @@
+{{block "assets" .}}
+{{template "assets-selection" .}}
+{{end}}
+
+
+{{block "assets-selection" .}}
+<select name="asset"
+        hx-get="/plot" hx-target="#asset-preview" hx-indicator=".htmx-indicator">
+  Assets:
+  {{range .Assets}}
+    {{template "asset-option" .}}
+  {{end}}
+</select>
+{{template "asset-preview" .}}
+{{end}}
+
+
+{{block "asset-option" .}}
+<option value="{{.Value}}">{{.Label}}</option>
+{{end}}
+
+
+{{block "asset-preview" .}}
+<div id="asset-preview">
+  {{if .Asset}}Plotting balance in {{.Asset}}.{{end}}
+</div>
+{{end}}
