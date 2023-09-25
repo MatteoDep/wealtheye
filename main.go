@@ -17,10 +17,9 @@ var assets = []Asset {
     {Value: "usd", Label: "USD"},
     {Value: "btc", Label: "BTC"},
 }
-var default_asset = assets[0]
 
 func plot_handler(c *fiber.Ctx) error {
-    asset := default_asset
+    var asset Asset
     chosen_asset := c.Query("asset")
     if chosen_asset != "" {
         for i := range assets {
@@ -42,7 +41,6 @@ func root_handler(c *fiber.Ctx) error {
 	return c.Render("index", fiber.Map{
 		"Title": app_name,
         "Assets": assets,
-        "AssetLabel": default_asset.Label,
 	}, "layouts/main")
 }
 

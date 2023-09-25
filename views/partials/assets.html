@@ -8,7 +8,7 @@
 
 {{block "assets-selection" .}}
 <select name="asset"
-        hx-get="/plot" hx-target="#balance-plot">
+        hx-get="/plot" hx-target="#balance-plot" hx-trigger="change, load">
   {{range .Assets}}
     {{template "asset-option" .}}
   {{end}}
