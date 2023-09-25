@@ -1,12 +1,45 @@
+:root {
+  --light-color: #f7f7f7;
+  --dark-color: #202030;
+  --mid-color: #303040;
+  --mid-color-2: #302060;
+  --accent-color-1: #f0b030;
+}
+
 body {
-  background-color: #202042;
+  background-color: var(--dark-color);
+  color: var(--light-color);
   margin: 0px;
   padding: 0px;
   border: 0px;
+  font-size: 1em;
+  font-family: 'Roboto', sans-serif;
 }
 
-h1 {
-  background-color: #202020;
-  color: white;
-  padding: 20px;
+nav {
+  background-color: var(--mid-color);
 }
+
+nav h1 a {
+  color: var(--accent-color-1);
+  font-size: 2;
+  text-decoration: none;
+}
+
+section, nav {
+  padding: 10px 30px;
+}
+
+.altbg {
+  background-color: var(--mid-color-2);
+}
+
+#footer {
+  text-align: center;
+}
+
+#footer p {
+  max-width: 400px;
+  margin: auto;
+}
+

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,17 +12,27 @@ type Asset struct {
     Label string
 }
 
-var assets = map[string]Asset {
-    "btc": {Value: "btc", Label: "BTC"},
-    "usd": {Value: "usd", Label: "USD"},
-    "eur": {Value: "eur", Label: "EUR"},
+var assets = []Asset {
+    {Value: "eur", Label: "EUR"},
+    {Value: "usd", Label: "USD"},
+    {Value: "btc", Label: "BTC"},
 }
+var default_asset = assets[0]
 
 func plot_handler(c *fiber.Ctx) error {
-    asset := assets[c.Query("asset")].Label
-    fmt.Println(asset)
-    return c.Render("asset-preview", fiber.Map{
-        "Asset": asset,
+    asset := default_asset
+    chosen_asset := c.Query("asset")
+    if chosen_asset != "" {
+        for i := range assets {
+            if chosen_asset == assets[i].Value {
+                asset = assets[i]
+                break
+            }
+        }
+    }
+    log.Println("Chosen ", asset.Label)
+    return c.Render("balance-plot", fiber.Map{
+        "AssetLabel": asset.Label,
     })
 }
 
@@ -33,6 +42,7 @@ func root_handler(c *fiber.Ctx) error {
 	return c.Render("index", fiber.Map{
 		"Title": app_name,
         "Assets": assets,
+        "AssetLabel": default_asset.Label,
 	}, "layouts/main")
 }
 

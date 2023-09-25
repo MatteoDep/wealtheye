@@ -1,17 +1,19 @@
-{{block "assets" .}}
-{{template "assets-selection" .}}
+{{block "balance" .}}
+<p>
+  Plotting balance in
+  {{template "assets-selection" .}}
+</p>
 {{end}}
 
 
 {{block "assets-selection" .}}
 <select name="asset"
-        hx-get="/plot" hx-target="#asset-preview" hx-indicator=".htmx-indicator">
-  Assets:
+        hx-get="/plot" hx-target="#balance-plot">
   {{range .Assets}}
     {{template "asset-option" .}}
   {{end}}
 </select>
-{{template "asset-preview" .}}
+{{template "balance-plot" .}}
 {{end}}
 
 
@@ -20,8 +22,14 @@
 {{end}}
 
 
-{{block "asset-preview" .}}
-<div id="asset-preview">
-  {{if .Asset}}Plotting balance in {{.Asset}}.{{end}}
+{{block "balance-plot" .}}
+<div id="balance-plot" class="chart" hx-get="/plot">
+  <br>
+  <br>
+  <br>
+  Plot of balance in {{.AssetLabel}}.
+  <br>
+  <br>
+  <br>
 </div>
 {{end}}
