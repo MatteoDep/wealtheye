@@ -7,7 +7,7 @@
 
 
 {{block "assets-selection" .}}
-<select name="asset"
+<select name="symbol"
         hx-get="/plot" hx-target="#balance-plot" hx-trigger="change, load">
   {{range .Assets}}
     {{template "asset-option" .}}
@@ -18,16 +18,23 @@
 
 
 {{block "asset-option" .}}
-<option value="{{.Name}}">{{.Symbol}}</option>
+<option value="{{.Symbol}}">{{.Symbol}}</option>
 {{end}}
 
 
 {{block "balance-plot" .}}
-<div id="balance-plot" class="chart" hx-get="/plot">
+<div id="balance-plot" class="chart">
   <br>
   <br>
   <br>
-  Plot of balance in {{.AssetLabel}}.
+  Plot of balance in {{.AssetSymbol}}.
+  <br>
+  Last asset prices are
+  <ol>
+    {{range .Prices}}
+      <li>{{.ValueUsd}}$</li>
+    {{end}}
+  </ol>
   <br>
   <br>
   <br>

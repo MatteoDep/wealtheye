@@ -6,28 +6,35 @@ import (
 )
 
 type Handler struct {
-    Svc app.Service
+	Svc app.Service
+    PA app.PriceApi
 }
 
 func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
-    asset, err := h.Svc.GetAsset(c.Query("asset"))
-    if err != nil {
-        return err
-    }
-    return c.Render("balance-plot", fiber.Map{
-        "AssetLabel": asset.Symbol,
-    })
+    assetSymbol := c.Query("symbol")
+	asset, err := h.Svc.GetAsset(assetSymbol)
+	if err != nil {
+		return err
+	}
+    prices, err := h.PA.GetDailyPrices(assetSymbol, 0)
+	if err != nil {
+		return err
+	}
+	return c.Render("balance-plot", fiber.Map{
+		"AssetSymbol": asset.Symbol,
+        "Prices": prices,
+	})
 }
 
 func (h *Handler) ServeIndex(c *fiber.Ctx) error {
 	app_name := "WealthEye"
-    assets, err := h.Svc.GetAssets()
-    if err != nil {
-        return err
-    }
+	assets, err := h.Svc.GetAssets()
+	if err != nil {
+		return err
+	}
 
 	return c.Render("index", fiber.Map{
-		"Title": app_name,
-        "Assets": assets,
+		"Title":  app_name,
+		"Assets": assets,
 	}, "layouts/main")
 }
