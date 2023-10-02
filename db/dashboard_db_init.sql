@@ -2,6 +2,8 @@ PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
 CREATE TABLE asset (
 	symbol TEXT PRIMARY KEY,
+	name TEXT NOT NULL,
+	type TEXT NOT NULL, -- 'physical currency', 'digital currency', 'stock', 'commodity', 'bond'
 	value_usd REAL,
 	last_synched TEXT
 );
@@ -26,7 +28,7 @@ CREATE TABLE price_daily(
 	value_usd REAL NOT NULL,
 	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol)
 );
-INSERT INTO asset(symbol) VALUES('USD');
-INSERT INTO asset(symbol) VALUES('EUR');
-INSERT INTO asset(symbol) VALUES('BTC');
+INSERT INTO asset(symbol, name, type) VALUES('USD', 'United States Dollar', 'physical currency');
+INSERT INTO asset(symbol, name, type) VALUES('EUR', 'Euro', 'physical currency');
+INSERT INTO asset(symbol, name, type) VALUES('BTC', 'Bitcoin', 'digital currency');
 COMMIT;

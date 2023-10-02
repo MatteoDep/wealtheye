@@ -16,7 +16,7 @@ func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-    prices, err := h.PA.GetDailyPrices(assetSymbol, 0)
+    prices, err := h.PA.GetDailyPrices(asset, 0)
 	if err != nil {
 		return err
 	}

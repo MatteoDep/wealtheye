@@ -7,5 +7,5 @@ type Service interface {
 }
 
 type PriceApi interface {
-	GetDailyPrices(assetSymbol string, numDays int) ([]Price, error)
+	GetDailyPrices(asset Asset, numDays int) ([]Price, error)
 }

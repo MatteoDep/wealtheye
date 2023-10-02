@@ -1,4 +1,4 @@
-package sqlite_service
+package sqliteservice
 
 import (
 	"database/sql"
@@ -27,6 +27,8 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
 		var asset app.Asset
 		err := rows.Scan(
 			&asset.Symbol,
+            &asset.Name,
+            &asset.Type,
 			&asset.ValueUsd,
 			&asset.LastSynched,
 		)
@@ -54,6 +56,8 @@ func (s *Service) GetAsset(symbol string) (app.Asset, error) {
 	var asset app.Asset
 	err := row.Scan(
 		&asset.Symbol,
+        &asset.Name,
+        &asset.Type,
 		&asset.ValueUsd,
 		&asset.LastSynched,
 	)

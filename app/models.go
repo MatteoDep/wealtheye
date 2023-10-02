@@ -7,6 +7,8 @@ import (
 
 type Asset struct {
 	Symbol      string
+	Name        string
+	Type        string
 	ValueUsd    sql.NullFloat64
 	LastSynched sql.NullTime
 }

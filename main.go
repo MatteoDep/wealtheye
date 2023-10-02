@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/MatteoDep/wealtheye/app"
-	alphavantageapi "github.com/MatteoDep/wealtheye/app/alpha_vantage_api"
+	"github.com/MatteoDep/wealtheye/app/alphavantageapi"
 	"github.com/MatteoDep/wealtheye/app/handler"
-	"github.com/MatteoDep/wealtheye/app/sqlite_service"
+	"github.com/MatteoDep/wealtheye/app/sqliteservice"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	_ "github.com/mattn/go-sqlite3"
@@ -17,7 +17,6 @@ import (
 func main() {
     var cfg app.Config
     app.GetConfig(&cfg)
-    log.Println(cfg)
 
     const dbfile string = "db/dashboard.db"
 
@@ -27,7 +26,7 @@ func main() {
     }
     defer db.Close()
 
-    svc := sqlite_service.Service{
+    svc := sqliteservice.Service{
         DB: db,
     }
 
