@@ -26,17 +26,17 @@ func main() {
     }
     defer db.Close()
 
-    svc := sqliteservice.Service{
-        DB: db,
-    }
-
     pa := alphavantageapi.PriceApi{
         Cfg: &cfg,
     }
 
+    svc := sqliteservice.Service{
+        DB: db,
+        PA: &pa,
+    }
+
     h := handler.Handler{
         Svc: &svc,
-        PA: &pa,
     }
 
 	engine := html.New("./views", ".html")

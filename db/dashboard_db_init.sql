@@ -3,9 +3,9 @@ BEGIN TRANSACTION;
 CREATE TABLE asset (
 	symbol TEXT PRIMARY KEY,
 	name TEXT NOT NULL,
-	type TEXT NOT NULL, -- 'physical currency', 'digital currency', 'stock', 'commodity', 'bond'
+	type TEXT NOT NULL, -- 'forex', 'crypto', 'stock', 'commodity', 'bond'
 	value_usd REAL,
-	last_synched TEXT
+	last_synched TIMESTAMP
 );
 CREATE TABLE wallet(
 	id INTEGER PRIMARY KEY,
@@ -24,11 +24,11 @@ CREATE TABLE transfer(
 CREATE TABLE price_daily(
 	id INTEGER PRIMARY KEY,
 	asset_symbol TEXT NOT NULL,
-	timestamp_utc TEXT NOT NULL,
+	timestamp_utc TIMESTAMP NOT NULL,
 	value_usd REAL NOT NULL,
 	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol)
 );
-INSERT INTO asset(symbol, name, type) VALUES('USD', 'United States Dollar', 'physical currency');
-INSERT INTO asset(symbol, name, type) VALUES('EUR', 'Euro', 'physical currency');
-INSERT INTO asset(symbol, name, type) VALUES('BTC', 'Bitcoin', 'digital currency');
+INSERT INTO asset(symbol, name, type) VALUES('USD', 'United States Dollar', 'forex');
+INSERT INTO asset(symbol, name, type) VALUES('EUR', 'Euro', 'forex');
+INSERT INTO asset(symbol, name, type) VALUES('BTC', 'Bitcoin', 'crypto');
 COMMIT;

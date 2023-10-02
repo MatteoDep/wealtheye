@@ -2,6 +2,8 @@ package sqliteservice
 
 import (
 	"database/sql"
+	"log"
+	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
 	_ "github.com/mattn/go-sqlite3"
@@ -9,6 +11,7 @@ import (
 
 type Service struct {
 	DB *sql.DB
+    PA app.PriceApi
 }
 
 func (s *Service) GetAssets() ([]app.Asset, error) {
@@ -47,9 +50,9 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
 
 func (s *Service) GetAsset(symbol string) (app.Asset, error) {
 	query_str := `
-        select *
-        from asset
-        where symbol = $1
+        SELECT *
+        FROM asset
+        WHERE symbol = $1
     `
 	row := s.DB.QueryRow(query_str, symbol)
 
@@ -72,21 +75,31 @@ func (s *Service) GetAsset(symbol string) (app.Asset, error) {
 	return asset, nil
 }
 
-func (s *Service) GetPrices(assetSymbol string) ([]app.Price, error) {
+func (s *Service) GetPrices(
+    asset app.Asset,
+    fromTimestamp time.Time,
+    toTimestamp time.Time,
+) ([]app.Price, error) {
+    prices := []app.Price{}
+    if asset.Symbol == "USD" || toTimestamp.Sub(fromTimestamp) < 24 * time.Hour {
+        return prices, nil
+    }
+
 	query_str := `
-        select *
-        from price_daily
-        where asset_symbol = $1
+        SELECT *
+        FROM price_daily
+        WHERE asset_symbol = $1
+        AND timestamp_utc >= $2
+        AND timestamp_utc <= $3
     `
-	rows, err := s.DB.Query(query_str, assetSymbol)
+	rows, err := s.DB.Query(query_str, asset.Symbol, fromTimestamp, toTimestamp)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var prices []app.Price
+    var price app.Price
 	for rows.Next() {
-		var price app.Price
 		err := rows.Scan(
 			&price.Id,
 			&price.AssetSymbol,
@@ -94,14 +107,73 @@ func (s *Service) GetPrices(assetSymbol string) ([]app.Price, error) {
 			&price.ValueUsd,
 		)
 		if err != nil {
-			return prices, err
+			return nil, err
 		}
 		prices = append(prices, price)
 	}
 
 	if err := rows.Err(); err != nil {
-		return prices, err
+		return nil, err
 	}
 
+    missingTimestamps := app.GetMissingTimestamps(
+        prices,
+        fromTimestamp,
+        toTimestamp,
+        asset.Type != "crypto",
+    )
+
+    pricesToAppend, err := s.PA.GetDailyPrices(asset, missingTimestamps)
+    if err != nil {
+        return nil, err
+    }
+
+    prices = append(prices, pricesToAppend...)
+
+    app.SortPrices(prices)
+
+    err = s.PushPrices(prices)
+    if err != nil {
+        log.Println("Error during prices insert.", err)
+    }
+
 	return prices, nil
+}
+
+func (s *Service) PushPrices(prices []app.Price) error {
+    insertsql := `
+    INSERT INTO price_daily (asset_symbol, timestamp_utc, value_usd)
+    VALUES ($1, $2, $3);
+    `
+    updatesql := `
+    UPDATE asset
+    SET
+        value_usd = $1,
+        last_synched = $2
+    WHERE symbol = $3;
+    `
+    for _, price := range prices {
+        _, err := s.DB.Exec(
+            insertsql,
+            price.AssetSymbol,
+            price.TimestampUtc,
+            price.ValueUsd,
+        )
+        if err != nil {
+            return err
+        }
+
+        if time.Now().UTC().Sub(price.TimestampUtc).Abs().Hours() < 24 {
+            _, err := s.DB.Exec(
+                updatesql,
+                price.ValueUsd,
+                price.TimestampUtc,
+                price.AssetSymbol,
+            )
+            if err != nil {
+                return err
+            }
+        }
+    }
+    return nil
 }

@@ -19,7 +19,6 @@ func GetConfig(cfg *Config) {
         if err != nil {
             log.Fatal("Error loading .env file")
         }
-        log.Println("cfgmap", cfgmap)
 
         cfg.PriceApi.Key = cfgmap["PRICE_API_KEY"]
     }

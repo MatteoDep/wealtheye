@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
+	"golang.org/x/exp/slices"
 )
 
 type PriceApi struct {
@@ -32,21 +33,24 @@ func (ufe UndefinedTypeError) Error() string {
     return msg
 }
 
-func (p *PriceApi) GetDailyPrices(asset app.Asset, numDays int) ([]app.Price, error) {
+func (p *PriceApi) GetDailyPrices(
+    asset app.Asset,
+    timestamps []time.Time,
+) ([]app.Price, error) {
     prices := []app.Price{}
-    if asset.Symbol == "USD" {
+    if asset.Symbol == "USD" || len(timestamps) == 0 {
         return prices, nil
     }
 
     var priceLabel string
     timeSeriesLabel := "Time Series "
 	reqUrl := "https://www.alphavantage.co/query"
-    if asset.Type == "physical currency" {
+    if asset.Type == "forex" {
         reqUrl += "?function=FX_DAILY&from_symbol=" + asset.Symbol
         reqUrl += "&to_symbol=USD"
         priceLabel = "4. close"
         timeSeriesLabel += "FX (Daily)"
-    } else if asset.Type == "digital currency" {
+    } else if asset.Type == "crypto" {
         reqUrl += "?function=DIGITAL_CURRENCY_DAILY&symbol=" + asset.Symbol
         reqUrl += "&market=USD"
         priceLabel = "4a. close (USD)"
@@ -56,41 +60,42 @@ func (p *PriceApi) GetDailyPrices(asset app.Asset, numDays int) ([]app.Price, er
         return nil, UndefinedTypeError{asset: &asset}
     }
 	reqUrl += "&apikey=" + p.Cfg.PriceApi.Key
-    log.Println(asset.Symbol)
-    log.Println(reqUrl)
 
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-        return prices, err
+        return nil, err
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-        return prices, err
+        return nil, err
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil || (strings.Fields(string(body))[0] == "Error") {
-        return prices, err
+        return nil, err
 	}
 
     var result map[string]any
     json.Unmarshal([]byte(body), &result)
-    log.Println(result)
     timeSeries := result[timeSeriesLabel].(map[string]any)
-    daysCount := 0
     for date, priceMap := range timeSeries {
         timestamp, err := time.Parse(time.DateOnly, date)
         if err != nil {
-            return prices, err
+            return nil, err
         }
+
+        if !slices.Contains(timestamps, timestamp) {
+            continue
+        }
+
         value, err := strconv.ParseFloat(
             priceMap.(map[string]any)[priceLabel].(string),
             64,
         )
         if err != nil {
-            return prices, err
+            return nil, err
         }
         price := app.Price{
             TimestampUtc: timestamp,
@@ -98,11 +103,6 @@ func (p *PriceApi) GetDailyPrices(asset app.Asset, numDays int) ([]app.Price, er
             ValueUsd: value,
         }
         prices = append(prices, price)
-
-        daysCount++
-        if daysCount == numDays {
-            break
-        }
     }
 
     return prices, nil

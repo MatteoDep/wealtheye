@@ -1,13 +1,14 @@
 package handler
 
 import (
+    "time"
+
 	"github.com/MatteoDep/wealtheye/app"
 	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {
 	Svc app.Service
-    PA app.PriceApi
 }
 
 func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
@@ -16,7 +17,12 @@ func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-    prices, err := h.PA.GetDailyPrices(asset, 0)
+    today := time.Now().UTC().Round(24 * time.Hour)
+    prices, err := h.Svc.GetPrices(
+        asset,
+        today.AddDate(0, -1, 0),
+        today,
+    )
 	if err != nil {
 		return err
 	}
