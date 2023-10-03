@@ -42,5 +42,13 @@ func (h *Handler) ServeIndex(c *fiber.Ctx) error {
 	return c.Render("index", fiber.Map{
 		"Title":  app_name,
 		"Assets": assets,
+        "DefaultWalletName": "Wallet 0",
 	}, "layouts/main")
+}
+
+func (h *Handler) PostWallet(c *fiber.Ctx) error {
+    name := c.Query("name")
+    value := c.Query("value")
+    println(name, value)
+    return nil
 }

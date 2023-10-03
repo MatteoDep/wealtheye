@@ -26,8 +26,8 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
 	defer rows.Close()
 
 	var assets []app.Asset
+    var asset app.Asset
 	for rows.Next() {
-		var asset app.Asset
 		err := rows.Scan(
 			&asset.Symbol,
             &asset.Name,
@@ -148,9 +148,9 @@ func (s *Service) PushPrices(prices []app.Price) error {
     updatesql := `
     UPDATE asset
     SET
-        value_usd = $1,
+        value_usd = $3,
         last_synched = $2
-    WHERE symbol = $3;
+    WHERE symbol = $1;
     `
     for _, price := range prices {
         _, err := s.DB.Exec(
@@ -163,12 +163,13 @@ func (s *Service) PushPrices(prices []app.Price) error {
             return err
         }
 
-        if time.Now().UTC().Sub(price.TimestampUtc).Abs().Hours() < 24 {
+        now := time.Now().UTC()
+        if now.Sub(price.TimestampUtc).Abs().Hours() < 24 {
             _, err := s.DB.Exec(
                 updatesql,
-                price.ValueUsd,
-                price.TimestampUtc,
                 price.AssetSymbol,
+                now,
+                price.ValueUsd,
             )
             if err != nil {
                 return err

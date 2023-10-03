@@ -8,8 +8,7 @@ CREATE TABLE asset (
 	last_synched TIMESTAMP
 );
 CREATE TABLE wallet(
-	id INTEGER PRIMARY KEY,
-	label TEXT NOT NULL,
+	name TEXT PRIMARY KEY,
 	value_usd REAL DEFAULT 0
 );
 CREATE TABLE transfer(

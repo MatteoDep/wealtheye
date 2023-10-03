@@ -1,0 +1,48 @@
+{{block "holdings" .}}
+<ul id="wallet-list" class="block-list">
+  {{range .Wallets}}
+  {{template "wallet-info" .}}
+  {{end}}
+  {{template "wallet-new" .}}
+</ul>
+{{end}}
+
+{{block "wallet-info" .}}
+<li id="wallet-info">
+  <button type="button" class="block" hx-get="wallet?name={{.Name}}" hx-target="#wallet-details">
+    <em>{{.Name}}</em>
+    {{.ValueUsd}}$
+  </button>
+</li>
+{{end}}
+
+{{define "wallet-new"}}
+<li id="wallet-new">
+  <button type="button" class="block" onclick="showOverlay('overlay-form')">
+    <em>Create New</em>
+  </button>
+</li>
+<div id="overlay-form" class="overlay" onclick="hideOverlay('overlay-form')">
+  <form onmouseenter="offEnabled = false;" onmouseleave="offEnabled = true;" hx-post="/wallet">
+    <label for="name">Wallet Name:</label>
+    <input type="text" id="name" name="name" value="{{.DefaultWalletName}}"><br>
+    <label for="value">Starting Value:</label>
+    <input type="number" id="value" name="value" value="0">$<br>
+    <input type="button" name="submit" value="Submit"
+           onclick="offEnabled = true; hideOverlay('overlay-form')">
+    <input type="button" name="cancel" value="Cancel"
+           onclick="offEnabled = true; hideOverlay('overlay-form')">
+  </form>
+</div>
+<script>
+  offEnabled = true;
+  function showOverlay(id) {
+    document.getElementById(id).style.display = "block";
+  }
+  function hideOverlay(id) {
+    if (offEnabled) {
+      document.getElementById(id).style.display = "none";
+    }
+  }
+</script>
+{{end}}

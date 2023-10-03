@@ -1,14 +1,16 @@
 :root {
-  --light-color: #f7f7f7;
-  --dark-color: #202030;
-  --mid-color: #303040;
-  --mid-color-2: #302060;
-  --accent-color-1: #f0b030;
+  --white: #f7f7f7;
+  --black: #070707;
+  --dark: #24305e;
+  --mid: #374785;
+  --bright: #a8d0e6;
+  --accent1: #f76c6c;
+  --accent2: #f8e9a1;
 }
 
 body {
-  background-color: var(--dark-color);
-  color: var(--light-color);
+  background-color: var(--bright);
+  color: var(--black);
   margin: 0px;
   padding: 0px;
   border: 0px;
@@ -17,11 +19,11 @@ body {
 }
 
 nav {
-  background-color: var(--mid-color);
+  background-color: var(--mid);
 }
 
 nav h1 a {
-  color: var(--accent-color-1);
+  color: var(--accent2);
   font-size: 2;
   text-decoration: none;
 }
@@ -31,7 +33,8 @@ section, nav {
 }
 
 .altbg {
-  background-color: var(--mid-color-2);
+  background-color: var(--accent1);
+  color: var(--white);
 }
 
 #footer {
@@ -43,3 +46,56 @@ section, nav {
   margin: auto;
 }
 
+.block {
+  width: 200px;
+  height: 200px;
+  text-align: center;
+  font-size: 2em;
+}
+
+button {
+  background-color: var(--dark);
+  color: var(--white);
+  border-radius: 5px;
+  border: none;
+  padding: 5px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
+}
+
+button:hover {
+  background-color: var(--mid);
+  transition: 0.2s;
+}
+
+button:active {
+  background-color: var(--accent2);
+}
+
+.block-list{
+  list-style: none;
+}
+
+.overlay {
+  position: fixed;
+  display: none;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 100;
+}
+
+form {
+  color: var(--black);
+  padding: 3em;
+}
+
+.overlay form {
+  width: 400px;
+  max-height: 400px;
+  margin: auto;
+  margin-top: 20%;
+}
