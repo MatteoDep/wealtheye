@@ -15,11 +15,11 @@ type Service struct {
 }
 
 func (s *Service) GetAssets() ([]app.Asset, error) {
-	query_str := `
+	queryStr := `
         select *
         from asset
     `
-	rows, err := s.DB.Query(query_str)
+	rows, err := s.DB.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
 }
 
 func (s *Service) GetAsset(symbol string) (app.Asset, error) {
-	query_str := `
+	queryStr := `
         SELECT *
         FROM asset
         WHERE symbol = $1
     `
-	row := s.DB.QueryRow(query_str, symbol)
+	row := s.DB.QueryRow(queryStr, symbol)
 
 	var asset app.Asset
 	err := row.Scan(
@@ -85,14 +85,14 @@ func (s *Service) GetPrices(
         return prices, nil
     }
 
-	query_str := `
+	queryStr := `
         SELECT *
         FROM price_daily
         WHERE asset_symbol = $1
         AND timestamp_utc >= $2
         AND timestamp_utc <= $3
     `
-	rows, err := s.DB.Query(query_str, asset.Symbol, fromTimestamp, toTimestamp)
+	rows, err := s.DB.Query(queryStr, asset.Symbol, fromTimestamp, toTimestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -107,13 +107,13 @@ func (s *Service) GetPrices(
 			&price.ValueUsd,
 		)
 		if err != nil {
-			return nil, err
+			return prices, err
 		}
 		prices = append(prices, price)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return prices, err
 	}
 
     missingTimestamps := app.GetMissingTimestamps(
@@ -125,14 +125,13 @@ func (s *Service) GetPrices(
 
     pricesToAppend, err := s.PA.GetDailyPrices(asset, missingTimestamps)
     if err != nil {
-        return nil, err
+        return prices, err
     }
-
-    prices = append(prices, pricesToAppend...)
+    log.Println(pricesToAppend)
 
     app.SortPrices(prices)
 
-    err = s.PushPrices(prices)
+    err = s.PostPrices(pricesToAppend)
     if err != nil {
         log.Println("Error during prices insert.", err)
     }
@@ -140,12 +139,12 @@ func (s *Service) GetPrices(
 	return prices, nil
 }
 
-func (s *Service) PushPrices(prices []app.Price) error {
-    insertsql := `
+func (s *Service) PostPrices(prices []app.Price) error {
+    insertStr := `
     INSERT INTO price_daily (asset_symbol, timestamp_utc, value_usd)
     VALUES ($1, $2, $3);
     `
-    updatesql := `
+    updateStr := `
     UPDATE asset
     SET
         value_usd = $3,
@@ -154,7 +153,7 @@ func (s *Service) PushPrices(prices []app.Price) error {
     `
     for _, price := range prices {
         _, err := s.DB.Exec(
-            insertsql,
+            insertStr,
             price.AssetSymbol,
             price.TimestampUtc,
             price.ValueUsd,
@@ -166,7 +165,7 @@ func (s *Service) PushPrices(prices []app.Price) error {
         now := time.Now().UTC()
         if now.Sub(price.TimestampUtc).Abs().Hours() < 24 {
             _, err := s.DB.Exec(
-                updatesql,
+                updateStr,
                 price.AssetSymbol,
                 now,
                 price.ValueUsd,
@@ -175,6 +174,53 @@ func (s *Service) PushPrices(prices []app.Price) error {
                 return err
             }
         }
+    }
+    return nil
+}
+
+func (s *Service) GetWallets() ([]app.Wallet, error) {
+	queryStr := `
+        select *
+        from wallet
+    `
+	rows, err := s.DB.Query(queryStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var wallets []app.Wallet
+    var wallet app.Wallet
+	for rows.Next() {
+		err := rows.Scan(
+            &wallet.Name,
+			&wallet.ValueUsd,
+		)
+		if err != nil {
+			return wallets, err
+		}
+		wallets = append(wallets, wallet)
+	}
+
+	if err := rows.Err(); err != nil {
+		return wallets, err
+	}
+
+	return wallets, nil
+}
+
+func (s *Service) PostWallet(wallet app.Wallet) error {
+    insertStr := `
+    INSERT INTO wallet (name, value_usd)
+    VALUES ($1, $2);
+    `
+    _, err := s.DB.Exec(
+        insertStr,
+        wallet.Name,
+        wallet.ValueUsd,
+    )
+    if err != nil {
+        return err
     }
     return nil
 }

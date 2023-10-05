@@ -19,3 +19,8 @@ type Price struct {
 	TimestampUtc time.Time
 	ValueUsd     float64
 }
+
+type Wallet struct {
+	Name     string
+	ValueUsd float64
+}

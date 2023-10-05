@@ -48,7 +48,8 @@ func main() {
 
 	app.Get("/", h.ServeIndex)
     app.Get("/plot:symbol?", h.ServeBalancePlot)
-    app.Post("/wallet:name?value?", h.PostWallet)
+    app.Get("/new-wallet", h.ServeNewWalletForm)
+    app.Post("/wallet", h.ServeSubmitWallet)
 
 	log.Fatal(app.Listen(":4242"))
 }

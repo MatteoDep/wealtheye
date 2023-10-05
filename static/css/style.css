@@ -89,6 +89,7 @@ button:active {
 }
 
 form {
+  background-color: var(--bright);
   color: var(--black);
   padding: 3em;
 }

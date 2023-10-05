@@ -18,31 +18,26 @@
 
 {{define "wallet-new"}}
 <li id="wallet-new">
-  <button type="button" class="block" onclick="showOverlay('overlay-form')">
+  <button type="button" class="block" onclick="showOverlay('new-wallet-form')">
     <em>Create New</em>
   </button>
 </li>
-<div id="overlay-form" class="overlay" onclick="hideOverlay('overlay-form')">
-  <form onmouseenter="offEnabled = false;" onmouseleave="offEnabled = true;" hx-post="/wallet">
+<div id="new-wallet-form"></div>
+{{end}}
+
+{{block "new-wallet-form" .}}
+<div id="new-wallet-form" class="overlay" onclick="hideOverlay('new-wallet-form')">
+  <form onmouseenter="blockHiding('new-wallet-form')"
+        onmouseleave="allowHiding('new-wallet-form')"
+        action="" hx-post="/wallet" hx-swap="none">
     <label for="name">Wallet Name:</label>
-    <input type="text" id="name" name="name" value="{{.DefaultWalletName}}"><br>
+    <input type="text" id="name" name="Name" value="{{.DefaultWalletName}}"><br>
     <label for="value">Starting Value:</label>
-    <input type="number" id="value" name="value" value="0">$<br>
-    <input type="button" name="submit" value="Submit"
-           onclick="offEnabled = true; hideOverlay('overlay-form')">
+    <input type="number" id="value" name="ValueUsd" value="0">$<br>
+    <input type="submit" name="submit" value="Submit"
+           onclick="hideOverlay('new-wallet-form')">
     <input type="button" name="cancel" value="Cancel"
-           onclick="offEnabled = true; hideOverlay('overlay-form')">
+           onclick="hideOverlay('new-wallet-form')">
   </form>
 </div>
-<script>
-  offEnabled = true;
-  function showOverlay(id) {
-    document.getElementById(id).style.display = "block";
-  }
-  function hideOverlay(id) {
-    if (offEnabled) {
-      document.getElementById(id).style.display = "none";
-    }
-  }
-</script>
 {{end}}

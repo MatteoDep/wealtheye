@@ -25,7 +25,8 @@ CREATE TABLE price_daily(
 	asset_symbol TEXT NOT NULL,
 	timestamp_utc TIMESTAMP NOT NULL,
 	value_usd REAL NOT NULL,
-	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol)
+	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol),
+	UNIQUE(asset_symbol, timestamp_utc)
 );
 INSERT INTO asset(symbol, name, type) VALUES('USD', 'United States Dollar', 'forex');
 INSERT INTO asset(symbol, name, type) VALUES('EUR', 'Euro', 'forex');
