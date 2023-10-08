@@ -16,6 +16,9 @@ body {
   border: 0px;
   font-size: 1em;
   font-family: 'Roboto', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
@@ -37,8 +40,9 @@ h2 {
   color: var(--accent1);
 }
 
-#page-content {
+main {
   padding: 20px;
+  flex: 1;
 }
 
 .altbg {
@@ -48,11 +52,17 @@ h2 {
 
 #footer {
   text-align: center;
+  clear: both;
+  position: relative;
 }
 
 #footer p {
   max-width: 400px;
   margin: auto;
+}
+
+a {
+  color: var(--dark);
 }
 
 .card {
