@@ -21,6 +21,7 @@ type Price struct {
 }
 
 type Wallet struct {
+	Id       int
 	Name     string
 	ValueUsd float64
 }

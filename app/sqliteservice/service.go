@@ -127,8 +127,8 @@ func (s *Service) GetPrices(
     if err != nil {
         return prices, err
     }
-    log.Println(pricesToAppend)
 
+    prices = append(prices, pricesToAppend...)
     app.SortPrices(prices)
 
     err = s.PostPrices(pricesToAppend)
@@ -180,8 +180,8 @@ func (s *Service) PostPrices(prices []app.Price) error {
 
 func (s *Service) GetWallets() ([]app.Wallet, error) {
 	queryStr := `
-        select *
-        from wallet
+        SELECT *
+        FROM wallet
     `
 	rows, err := s.DB.Query(queryStr)
 	if err != nil {
@@ -193,6 +193,7 @@ func (s *Service) GetWallets() ([]app.Wallet, error) {
     var wallet app.Wallet
 	for rows.Next() {
 		err := rows.Scan(
+            &wallet.Id,
             &wallet.Name,
 			&wallet.ValueUsd,
 		)
@@ -207,6 +208,31 @@ func (s *Service) GetWallets() ([]app.Wallet, error) {
 	}
 
 	return wallets, nil
+}
+
+func (s *Service) GetWallet(id string) (app.Wallet, error) {
+	queryStr := `
+        SELECT *
+        FROM wallet
+        WHERE id = $1
+    `
+	row := s.DB.QueryRow(queryStr, id)
+
+	var wallet app.Wallet
+	err := row.Scan(
+        &wallet.Id,
+        &wallet.Name,
+		&wallet.ValueUsd,
+	)
+	if err != nil {
+		return wallet, err
+	}
+
+	if err := row.Err(); err != nil {
+		return wallet, err
+	}
+
+	return wallet, nil
 }
 
 func (s *Service) PostWallet(wallet app.Wallet) error {

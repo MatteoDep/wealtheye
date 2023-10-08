@@ -1,43 +1,110 @@
-{{block "holdings" .}}
-<ul id="wallet-list" class="block-list">
-  {{range .Wallets}}
-  {{template "wallet-info" .}}
+{{block "holdings-page" .}}
+<h2>Holdings Overview</h2>
+{{template "holdings-balance-section" .}}
+{{template "holdings-wallets-section" .}}
+{{end}}
+
+{{block "holdings-balance-section" .}}
+<section id="balance-section">
+  <h3>Total Balance</h3>
+  <p>
+    Plotting balance in
+    {{template "assets-selection" .}}
+  </p>
+</section>
+{{end}}
+
+{{block "assets-selection" .}}
+<select name="symbol" hx-get="/plot" hx-target="#balance-plot" hx-trigger="change, load"
+        hx-indicator="#spinner">
+  {{range .Assets}}
+  {{template "asset-option" .}}
   {{end}}
-  {{template "wallet-new" .}}
-</ul>
+</select>
+<div id="balance-plot" class="chart"></div>
+<img  id="spinner" class="htmx-indicator" src="/static/img/spinner.svg"/>
 {{end}}
 
-{{block "wallet-info" .}}
-<li id="wallet-info">
-  <button type="button" class="block" hx-get="wallet?name={{.Name}}" hx-target="#wallet-details">
-    <em>{{.Name}}</em>
-    {{.ValueUsd}}$
+{{block "asset-option" .}}
+<option value="{{.Symbol}}">{{.Symbol}}</option>
+{{end}}
+
+{{block "balance-plot" .}}
+<div id="balance-plot" class="chart">
+  <br>
+  <br>
+  <br>
+  Plot of balance in {{.AssetSymbol}}.
+  <br>
+  Last asset prices are
+  <ol>
+    {{range .Prices}}
+    <li>{{.TimestampUtc}} - {{.ValueUsd}}$</li>
+    {{end}}
+  </ol>
+  <br>
+  <br>
+  <br>
+</div>
+{{end}}
+
+{{block "holdings-wallets-section" .}}
+<section id="holdings-section">
+  <h3>Wallets</h3>
+  <ul id="wallet-list" class="card-list">
+    {{range .Wallets}}
+    {{template "wallet-info-card" .}}
+    {{end}}
+    {{template "new-wallet-card" .}}
+  </ul>
+</section>
+{{end}}
+
+{{block "wallet-info-card" .}}
+<li id="wallet-info-card">
+  <button type="button" class="card" hx-get="wallet/{{.Id}}" hx-target="#page-content">
+    <div class="card-title">
+      {{.Name}}
+    </div>
+    <div class="card-info">
+      {{.ValueUsd}}$
+    </div>
   </button>
 </li>
 {{end}}
 
-{{define "wallet-new"}}
-<li id="wallet-new">
-  <button type="button" class="block" onclick="showOverlay('new-wallet-form')">
-    <em>Create New</em>
+{{define "new-wallet-card"}}
+<li id="new-wallet-card">
+  <button type="button" class="card"
+          hx-get="/new-wallet" hx-target="#dialog" hx-on:click="showModal()">
+    Create New
   </button>
 </li>
-<div id="new-wallet-form"></div>
 {{end}}
 
 {{block "new-wallet-form" .}}
-<div id="new-wallet-form" class="overlay" onclick="hideOverlay('new-wallet-form')">
-  <form onmouseenter="blockHiding('new-wallet-form')"
-        onmouseleave="allowHiding('new-wallet-form')"
-        action="" hx-post="/wallet" hx-swap="none">
-    <label for="name">Wallet Name:</label>
-    <input type="text" id="name" name="Name" value="{{.DefaultWalletName}}"><br>
-    <label for="value">Starting Value:</label>
-    <input type="number" id="value" name="ValueUsd" value="0">$<br>
-    <input type="submit" name="submit" value="Submit"
-           onclick="hideOverlay('new-wallet-form')">
-    <input type="button" name="cancel" value="Cancel"
-           onclick="hideOverlay('new-wallet-form')">
-  </form>
-</div>
+<form hx-post="/wallet" class="modal-content" hx-target="#wallet-list">
+  <table>
+    <tr>
+      <td>
+        <label for="name">Wallet Name:</label>
+      </td>
+      <td>
+        <input type="text" id="name" name="Name" value="{{.DefaultWalletName}}">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="value">Starting Value:</label>
+      </td>
+      <td>
+        <input type="number" id="value" name="ValueUsd" value="0">
+        $  <!-- todo: select asset -->
+        <!-- {{template "assets-selection" .}} -->
+      </td>
+    </tr>
+  </table>
+  <button type="submit" hx-on:click="hideModal()">Submit</button>
+  <button type="button" hx-on:click="hideModal()">Cancel</button>
+</form>
 {{end}}

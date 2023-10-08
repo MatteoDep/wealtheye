@@ -10,6 +10,7 @@ type Service interface {
 	PostPrices(prices []Price) error
 
 	GetWallets() ([]Wallet, error)
+	GetWallet(name string) (Wallet, error)
 	PostWallet(wallet Wallet) error
 }
 

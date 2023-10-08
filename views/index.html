@@ -1,13 +1,7 @@
 {{template "partials/header" .}}
-<section id="banner" class="altbg">
-  <h3>this app is work in progress!</h3>
-</section>
-<section id="balance-section">
-  <h3>Total Balance</h3>
-  {{template "balance" .}}
-</section>
-<section id="holdings-section">
-  <h3>Wallets</h3>
-  {{template "holdings" .}}
-</section>
+
+<div id="page-content" hx-get="/holdings" hx-indicator="#spinner" hx-trigger="load"></div>
+<img  id="spinner" class="htmx-indicator" src="/static/img/spinner.svg"/>
 {{template "partials/footer" .}}
+
+{{template "modal"}}

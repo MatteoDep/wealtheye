@@ -1,3 +1,5 @@
 <header>
-  <h1><a href="/">{{.Title}}</a></h1>
+  <h1 hx-get="/holdings" hx-target="#page-content" hx-trigger="click">
+    {{.Title}}
+  </h1>
 </header>
