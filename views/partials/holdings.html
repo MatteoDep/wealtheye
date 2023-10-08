@@ -5,7 +5,7 @@
 {{end}}
 
 {{block "holdings-balance-section" .}}
-<section id="balance-section">
+<section id="holdings-balance-section">
   <h3>Total Balance</h3>
   <p>
     Plotting balance in
@@ -49,7 +49,7 @@
 {{end}}
 
 {{block "holdings-wallets-section" .}}
-<section id="holdings-section">
+<section id="holdings-wallets-section">
   <h3>Wallets</h3>
   <ul id="wallet-list" class="card-list">
     {{range .Wallets}}
@@ -83,7 +83,7 @@
 {{end}}
 
 {{block "new-wallet-form" .}}
-<form hx-post="/wallet" class="modal-content" hx-target="#wallet-list">
+<form hx-post="/wallet" class="modal-content" hx-target="#holdings-wallets-section" hx-swap="outerHTML">
   <table>
     <tr>
       <td>
