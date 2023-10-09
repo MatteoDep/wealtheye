@@ -93,19 +93,52 @@ func (h *Handler) ServeNewWalletForm(c *fiber.Ctx) error {
     for slices.Contains(numbers, nextnum) {
         nextnum++
     }
-    DefaultWalletName := fmt.Sprintf("Wallet %d", nextnum)
 
-	return c.Render("new-wallet-form", fiber.Map{
-        "DefaultWalletName": DefaultWalletName,
+    defaultWallet := app.Wallet{
+        Name: fmt.Sprintf("Wallet %d", nextnum),
+        ValueUsd: 0,
+    }
+
+	return c.Render("wallet-form-create", fiber.Map{
+        "Wallet": defaultWallet,
 	})
 }
 
-func (h *Handler) ServeSubmitWallet(c *fiber.Ctx) error {
+func (h *Handler) ServeEditwWalletForm(c *fiber.Ctx) error {
+    id := c.Params("id")
+    wallet, err := h.Svc.GetWallet(id)
+	if err != nil {
+		return err
+	}
+
+	return c.Render("wallet-form-edit", fiber.Map{
+        "Wallet": wallet,
+	})
+}
+
+func (h *Handler) ServePostWallet(c *fiber.Ctx) error {
     wallet := new(app.Wallet)
     if err := c.BodyParser(wallet); err != nil {
         return err
     }
     if err := h.Svc.PostWallet(*wallet); err != nil {
+        return err
+    }
+    wallets, err := h.Svc.GetWallets()
+    if err != nil {
+        return err
+    }
+	return c.Render("holdings-wallets-section", fiber.Map{
+        "Wallets": wallets,
+	})
+}
+
+func (h *Handler) ServePutWallet(c *fiber.Ctx) error {
+    wallet := new(app.Wallet)
+    if err := c.BodyParser(wallet); err != nil {
+        return err
+    }
+    if err := h.Svc.PutWallet(*wallet); err != nil {
         return err
     }
     wallets, err := h.Svc.GetWallets()

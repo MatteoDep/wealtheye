@@ -250,3 +250,21 @@ func (s *Service) PostWallet(wallet app.Wallet) error {
     }
     return nil
 }
+
+func (s *Service) PutWallet(wallet app.Wallet) error {
+    insertStr := `
+    UPDATE wallet
+    SET
+        name = $1,
+        value_usd = $2;
+    `
+    _, err := s.DB.Exec(
+        insertStr,
+        wallet.Name,
+        wallet.ValueUsd,
+    )
+    if err != nil {
+        return err
+    }
+    return nil
+}

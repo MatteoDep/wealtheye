@@ -12,6 +12,7 @@ type Service interface {
 	GetWallets() ([]Wallet, error)
 	GetWallet(name string) (Wallet, error)
 	PostWallet(wallet Wallet) error
+	PutWallet(wallet Wallet) error
 }
 
 type PriceApi interface {

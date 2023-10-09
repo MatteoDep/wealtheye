@@ -50,8 +50,10 @@ func main() {
 	app.Get("/holdings", h.ServeHoldingsPage)
     app.Get("/plot:symbol?", h.ServeBalancePlot)
     app.Get("/wallet/:id", h.ServeWalletOverview)
-    app.Get("/new-wallet", h.ServeNewWalletForm)
-    app.Post("/wallet", h.ServeSubmitWallet)
+    app.Get("/new-wallet-form", h.ServeNewWalletForm)
+    app.Get("/edit-wallet-form/:id", h.ServeEditwWalletForm)
+    app.Post("/wallet", h.ServePostWallet)
+    app.Put("/wallet/:id", h.ServePutWallet)
 
 	log.Fatal(app.Listen(":4242"))
 }

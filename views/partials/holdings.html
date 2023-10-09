@@ -61,50 +61,74 @@
 {{end}}
 
 {{block "wallet-info-card" .}}
-<li id="wallet-info-card">
-  <button type="button" class="card" hx-get="wallet/{{.Id}}" hx-target="#main-content">
+<li id="wallet-info-card" class="card">
+  <div class="card-info clickable" hx-get="wallet/{{.Id}}" hx-target="#main-content">
     <div class="card-title">
       {{.Name}}
     </div>
-    <div class="card-info">
+    <div class="card-details">
       {{.ValueUsd}}$
     </div>
-  </button>
+  </div>
+  <div class="card-edit">
+    <span class="clickable" hx-get="/edit-wallet-form/{{.Id}}" hx-target="#dialog" hx-on:click="showModal()">
+      edit
+    </span>
+  </div>
 </li>
 {{end}}
 
 {{define "new-wallet-card"}}
-<li id="new-wallet-card">
-  <button type="button" class="card"
-          hx-get="/new-wallet" hx-target="#dialog" hx-on:click="showModal()">
+<li id="new-wallet-card" class="card">
+  <div type="button" class="clickable" hx-get="/new-wallet-form" hx-target="#dialog" hx-on:click="showModal()">
     Create New
-  </button>
+  </div>
 </li>
 {{end}}
 
-{{block "new-wallet-form" .}}
-<form hx-post="/wallet" class="modal-content" hx-target="#holdings-wallets-section" hx-swap="outerHTML">
+{{block "wallet-form-create" .}}
+<form class="modal-content" hx-post="/wallet" hx-target="#holdings-wallets-section" hx-swap="outerHTML">
+  {{template "wallet-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-form-edit" .}}
+<form class="modal-content" hx-put="/wallet/{{.Wallet.Id}}" hx-target="#holdings-wallets-section" hx-swap="outerHTML">
+  {{template "wallet-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-form-content" .}}
   <table>
     <tr>
       <td>
         <label for="name">Wallet Name:</label>
       </td>
+    </tr>
+    <tr>
       <td>
-        <input type="text" id="name" name="Name" value="{{.DefaultWalletName}}">
+        <input type="text" id="name" name="Name" value="{{.Wallet.Name}}">
       </td>
     </tr>
     <tr>
       <td>
         <label for="value">Starting Value:</label>
       </td>
+    </tr>
+    <tr>
       <td>
-        <input type="number" id="value" name="ValueUsd" value="0">
+        <input type="number" id="value" name="ValueUsd" value="{{.Wallet.ValueUsd}}">
         $  <!-- todo: select asset -->
         <!-- {{template "assets-selection" .}} -->
       </td>
     </tr>
+    <tr>
+      <td>
+        <button type="submit" hx-on:click="hideModal()">Submit</button>
+      </td>
+      <td>
+        <button type="button" hx-on:click="hideModal()">Cancel</button>
+      </td>
+    </tr>
   </table>
-  <button type="submit" hx-on:click="hideModal()">Submit</button>
-  <button type="button" hx-on:click="hideModal()">Cancel</button>
-</form>
 {{end}}
