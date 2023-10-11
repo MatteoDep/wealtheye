@@ -1,6 +1,53 @@
 {{define "modal"}}
 <div id="modal" class="modal fade">
   <div id="underlay" class="modal-underlay" hx-on:click="hideModal()"></div>
-  <div id="dialog" class="modal-dialog" hx-target="this"></div>
+  <div id="dialog" class="modal-dialog"></div>
 </div>
+{{end}}
+
+{{block "wallet-form-create" .}}
+<form class="modal-content" hx-post="/wallet" hx-target="#dialog" hx-swap="innerHTML">
+  {{template "wallet-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-form-edit" .}}
+<form class="modal-content" hx-put="/wallet/{{.Wallet.Id}}" hx-target="#dialog" hx-swap="innerHTML">
+  {{template "wallet-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-form-content" .}}
+  <table>
+    <tr>
+      <td>
+        <label for="name">Wallet Name:</label>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <input type="text" id="name" name="Name" value="{{.Wallet.Name}}">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="value">Starting Value:</label>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <input type="number" id="value" name="ValueUsd" value="{{.Wallet.ValueUsd}}">
+        $  <!-- todo: select asset -->
+        <!-- {{template "assets-selection" .}} -->
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <button type="submit" hx-on:click="hideModal()">Submit</button>
+      </td>
+      <td>
+        <button type="button" hx-on:click="hideModal()">Cancel</button>
+      </td>
+    </tr>
+  </table>
 {{end}}

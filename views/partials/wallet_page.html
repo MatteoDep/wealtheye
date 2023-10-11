@@ -1,0 +1,33 @@
+{{block "wallet-page" .}}
+<div id="wallet-page"
+     hx-get="/wallet-page/{{.Wallet.Id}}" hx-trigger="walletEdited from:body" hx-swap="outerHTML">
+  <div class="page-title">
+    <h2>{{.Wallet.Name}}</h2>
+  </div>
+  <section id="wallet-overview-section">
+    {{template "wallet-overview-section" .}}
+  </section>
+  <section id="wallet-transactions-section">
+    {{template "wallet-transactions-section" .}}
+  </section>
+</div>
+{{end}}
+
+{{block "wallet-overview-section" .}}
+<h3>Overview</h3>
+<div class="wallet-value">
+  Total Value: {{.Wallet.ValueUsd}}
+</div>
+<div class="edit-button">
+  <button class="clickable"
+        hx-get="/edit-wallet-form/{{.Wallet.Id}}"
+        hx-target="#dialog" hx-on:click="showModal()" hx-swap="innerHTML">
+    edit
+  </button>
+</div>
+{{end}}
+
+
+{{block "wallet-transactions-section" .}}
+  <h3>Transactions</h3>
+{{end}}

@@ -47,9 +47,10 @@ func main() {
     app.Static("/static/", "./static")
 
 	app.Get("/", h.ServeIndex)
-	app.Get("/holdings", h.ServeHoldingsPage)
+	app.Get("/holdings-page", h.ServeHoldingsPage)
     app.Get("/plot:symbol?", h.ServeBalancePlot)
-    app.Get("/wallet/:id", h.ServeWalletOverview)
+    app.Get("/wallet-page/:id", h.ServeWalletPage)
+    app.Get("/wallet-info-card/:id", h.ServeWalletInfoCard)
     app.Get("/new-wallet-form", h.ServeNewWalletForm)
     app.Get("/edit-wallet-form/:id", h.ServeEditwWalletForm)
     app.Post("/wallet", h.ServePostWallet)

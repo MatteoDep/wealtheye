@@ -67,6 +67,15 @@ a {
   color: var(--dark);
 }
 
+button {
+  background-color: var(--accent2);
+  color: var(--black);
+}
+
+button:hover {
+  box-shadow: inset 5px 5px 2px rgba(0,0,0,0.5);
+}
+
 .card {
   display: flex;
   flex-direction: column;

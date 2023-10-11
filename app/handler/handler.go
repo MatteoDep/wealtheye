@@ -56,7 +56,7 @@ func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) ServeWalletOverview(c *fiber.Ctx) error {
+func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
     id := c.Params("id")
     wallet, err := h.Svc.GetWallet(id)
 	if err != nil {
@@ -66,6 +66,16 @@ func (h *Handler) ServeWalletOverview(c *fiber.Ctx) error {
 	return c.Render("wallet-page", fiber.Map{
         "Wallet": wallet,
 	})
+}
+
+func (h *Handler) ServeWalletInfoCard(c *fiber.Ctx) error {
+    id := c.Params("id")
+    wallet, err := h.Svc.GetWallet(id)
+	if err != nil {
+		return err
+	}
+
+	return c.Render("wallet-info-card", wallet)
 }
 
 func (h *Handler) ServeNewWalletForm(c *fiber.Ctx) error {
@@ -124,13 +134,9 @@ func (h *Handler) ServePostWallet(c *fiber.Ctx) error {
     if err := h.Svc.PostWallet(*wallet); err != nil {
         return err
     }
-    wallets, err := h.Svc.GetWallets()
-    if err != nil {
-        return err
-    }
-	return c.Render("holdings-wallets-section", fiber.Map{
-        "Wallets": wallets,
-	})
+
+    c.Set("HX-Trigger-After-Swap", "walletCreated")
+    return nil
 }
 
 func (h *Handler) ServePutWallet(c *fiber.Ctx) error {
@@ -141,11 +147,6 @@ func (h *Handler) ServePutWallet(c *fiber.Ctx) error {
     if err := h.Svc.PutWallet(*wallet); err != nil {
         return err
     }
-    wallets, err := h.Svc.GetWallets()
-    if err != nil {
-        return err
-    }
-	return c.Render("holdings-wallets-section", fiber.Map{
-        "Wallets": wallets,
-	})
+    c.Set("HX-Trigger-After-Swap", "walletEdited")
+    return nil
 }
