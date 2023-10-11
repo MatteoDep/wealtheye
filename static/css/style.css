@@ -1,15 +1,19 @@
 :root {
   --white: #f7f7f7;
   --black: #070707;
-  --dark: #24305e;
-  --mid: #374785;
-  --bright: #a8d0e6;
-  --accent1: #f76c6c;
-  --accent2: #f8e9a1;
+  --dark-blue: #24305e;
+  --mid-blue: #374785;
+  --bright-blue: #a8d0e6;
+  --red: #f76c6c;
+  --yellow: #f8e9a1;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background-color: var(--bright);
+  background-color: var(--bright-blue);
   color: var(--black);
   margin: 0px;
   padding: 0px;
@@ -22,15 +26,15 @@ body {
 }
 
 header {
-  background-color: var(--mid);
+  background-color: var(--mid-blue);
 }
 
 header h1 {
-  color: var(--accent2);
+  color: var(--yellow);
   font-size: 2;
 }
 
-.clickable {
+button, .clickable {
   cursor: pointer;
 }
 
@@ -39,7 +43,7 @@ section, header {
 }
 
 h2 {
-  color: var(--accent1);
+  color: var(--red);
 }
 
 main {
@@ -48,7 +52,7 @@ main {
 }
 
 .altbg {
-  background-color: var(--accent1);
+  background-color: var(--red);
   color: var(--white);
 }
 
@@ -64,36 +68,35 @@ main {
 }
 
 a {
-  color: var(--dark);
+  color: var(--dark-blue);
+}
+
+button, .card {
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
 }
 
 button {
-  background-color: var(--accent2);
+  background-color: var(--yellow);
   color: var(--black);
 }
 
 button:hover {
-  box-shadow: inset 5px 5px 2px rgba(0,0,0,0.5);
+  box-shadow: inset 0px 0px 10px var(--white);
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   width: 200px;
   height: 200px;
   text-align: center;
   font-size: 2em;
-  background-color: var(--dark);
+  background-color: var(--dark-blue);
   color: var(--white);
-  border-radius: 5px;
-  border: none;
-  padding: 5px;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
 }
 
 .card-edit {
-  color: var(--accent2);
+  color: var(--yellow);
 }
 
 .card-list{
@@ -129,14 +132,50 @@ button:hover {
   z-index: -1;
 }
 
-.modal-content {
+.modal-dialog {
   width: 80%;
   max-width: 600px;
-  margin-top: 10vh;
 }
 
 form {
-  background-color: var(--bright);
+  background-color: var(--bright-blue);
   color: var(--black);
   padding: 3em;
+}
+
+.form-fields {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  gap: 20px;
+}
+
+.form-field {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  flex-wrap: nowrap;
+}
+
+.form-field label {
+  width: 25%;
+}
+
+.form-field input {
+  width: 75%;
+}
+
+
+.form-buttons {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-items: stretch;
+  gap: 20px;
+}
+
+.form-button {
+  width: 100%;
 }

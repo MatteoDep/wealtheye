@@ -66,30 +66,22 @@
 {{end}}
 
 {{block "wallet-info-card" .}}
-<li id="wallet-info-card-{{.Id}}" class="card"
-    hx-get="/wallet-info-card/{{.Id}}" hx-trigger="walletEdited from:body" hx-swap="outerHTML">
-  <div class="card-info clickable" hx-get="wallet-page/{{.Id}}" hx-target="#main-content" hx-swap="innerHTML">
+<li>
+  <button class="card" hx-get="wallet-page/{{.Id}}" hx-target="#main-content" hx-swap="innerHTML">
     <div class="card-title">
       {{.Name}}
     </div>
     <div class="card-details">
       {{.ValueUsd}}$
     </div>
-  </div>
-  <div class="card-edit">
-    <button class="clickable"
-          hx-get="/edit-wallet-form/{{.Id}}"
-          hx-target="#dialog" hx-on:click="showModal()" hx-swap="innerHTML">
-      edit
-    </button>
-  </div>
+  </button>
 </li>
 {{end}}
 
 {{define "new-wallet-card"}}
-<li id="new-wallet-card" class="card">
-  <div type="button" class="clickable" hx-get="/new-wallet-form" hx-target="#dialog" hx-on:click="showModal()" hx-swap="innerHTML">
+<li>
+  <button class="card" hx-get="/new-wallet-form" hx-target="#dialog" hx-on:click="showModal()" hx-swap="innerHTML">
     Create New
-  </div>
+  </button>
 </li>
 {{end}}
