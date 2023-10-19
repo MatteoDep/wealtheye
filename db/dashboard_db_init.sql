@@ -14,12 +14,14 @@ CREATE TABLE wallet(
 );
 CREATE TABLE transfer(
 	id INTEGER PRIMARY KEY,
-	timestamp_utc TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	timestamp_utc TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	ammount REAL NOT NULL,
 	asset_symbol TEXT NOT NULL,
 	from_wallet_id INTEGER,
 	to_wallet_id INTEGER NOT NULL,
-	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol)
+	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol),
+	FOREIGN KEY(from_wallet_id) REFERENCES wallet(id),
+	FOREIGN KEY(to_wallet_id) REFERENCES wallet(id)
 );
 CREATE TABLE price_daily(
 	id INTEGER PRIMARY KEY,

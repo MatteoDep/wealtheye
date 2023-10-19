@@ -1,7 +1,14 @@
 {{define "modal"}}
-<div id="modal" class="modal fade">
+<div id="modal" class="modal">
   <div id="underlay" class="modal-underlay" hx-on:click="hideModal()"></div>
   <div id="dialog" class="modal-dialog"></div>
+</div>
+{{end}}
+
+{{define "form-buttons"}}
+<div class="form-buttons">
+  <button class="form-button" type="submit" hx-on:click="hideModal()">Submit</button>
+  <button class="form-button" type="button" hx-on:click="hideModal()">Cancel</button>
 </div>
 {{end}}
 
@@ -20,18 +27,57 @@
 {{block "wallet-form-content" .}}
 <div class="form-fields">
   <div class="form-field">
-    <label for="name">Wallet Name:</label>
-    <input type="text" name="Name" value="{{.Wallet.Name}}">
+    <label for="name" class="one-quarter">Wallet Name:</label>
+    <div class="gap"></div>
+    <input type="text" name="Name" value="{{.Wallet.Name}}" class="three-quarters">
   </div>
   <div class="form-field">
-    <label for="value">Starting Value:</label>
-    <input type="number" name="ValueUsd" value="{{.Wallet.ValueUsd}}">
-    $  <!-- todo: select asset -->
+    <label for="value" class="one-quarter">Starting Value:</label>
+    <div class="gap"></div>
+    <input type="number" name="ValueUsd" value="{{.Wallet.ValueUsd}}" class="three-quarters">
+    $
+    <!-- todo: select asset -->
     <!-- {{template "assets-selection" .}} -->
   </div>
 </div>
-<div class="form-buttons">
-  <button class="form-button" type="submit" hx-on:click="hideModal()">Submit</button>
-  <button class="form-button" type="button" hx-on:click="hideModal()">Cancel</button>
+{{template "form-buttons"}}
+{{end}}
+
+{{block "wallet-transfer-create" .}}
+<form class="modal-content" hx-post="/wallet-transfer/{{.WalletId}}" hx-target="#dialog" hx-swap="innerHTML">
+  {{template "wallet-transfer-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-transfer-edit" .}}
+<form class="modal-content" hx-put="/wallet-transfer/{{.WalletId}}" hx-target="#dialog" hx-swap="innerHTML">
+  {{template "wallet-transfer-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-transfer-form-content" .}}
+<div class="form-fields">
+  <div class="form-field">
+    <select name="TypeAction" id="wallet-transfer-type" class="one-quarter">
+      {{range .Types}}
+      <option value="{{.Action}}">{{.Preposition}}</option>
+      {{end}}
+    </select>
+    <div class="gap"></div>
+    <select name="OtherWalletId" id="walletId" class="three-quarters">
+      {{range .Wallets}}
+      <option value="{{.Id}}">{{.Name}}</option>
+      {{end}}
+    </select>
+  </div>
+  <div class="form-field">
+    <label for="ammount" class="one-quarter">Ammount:</label>
+    <div class="gap"></div>
+    <input type="number" id="ammount" name="Ammount" value="{{.Ammount}}" class="three-quarters">
+    $
+    <!-- todo: select asset -->
+    <!-- {{template "assets-selection" .}} -->
+  </div>
 </div>
+{{template "form-buttons"}}
 {{end}}

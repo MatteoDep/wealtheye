@@ -56,21 +56,12 @@ func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
-    id := c.Params("id")
-    wallet, err := h.Svc.GetWallet(id)
+func (h *Handler) ServeWalletInfoCard(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
 	if err != nil {
 		return err
 	}
-
-	return c.Render("wallet-page", fiber.Map{
-        "Wallet": wallet,
-	})
-}
-
-func (h *Handler) ServeWalletInfoCard(c *fiber.Ctx) error {
-    id := c.Params("id")
-    wallet, err := h.Svc.GetWallet(id)
+    wallet, err := h.Svc.GetWallet(walletId)
 	if err != nil {
 		return err
 	}
@@ -78,20 +69,49 @@ func (h *Handler) ServeWalletInfoCard(c *fiber.Ctx) error {
 	return c.Render("wallet-info-card", wallet)
 }
 
-func (h *Handler) ServeNewWalletForm(c *fiber.Ctx) error {
+func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+	if err != nil {
+		return err
+	}
+    wallet, err := h.Svc.GetWallet(walletId)
+	if err != nil {
+		return err
+	}
+    transfers, err := h.Svc.GetWalletTransfers(walletId)
+	if err != nil {
+		return err
+	}
+
+    walletTransfersDTO := []app.WalletTransferDTO{}
+    for _, transfer := range transfers {
+        walletTransferDTO, err := h.TransferToWalletTransferDTO(transfer, walletId)
+        if err != nil {
+            return err
+        }
+        walletTransfersDTO = append(walletTransfersDTO, walletTransferDTO)
+    }
+
+	return c.Render("wallet-page", fiber.Map{
+        "Wallet": wallet,
+        "WalletTransfers": walletTransfersDTO,
+	})
+}
+
+func (h *Handler) ServeWalletCreateForm(c *fiber.Ctx) error {
     wallets, err := h.Svc.GetWallets()
     if err != nil {
         return err
     }
 
-    numbers := []uint64{}
+    numbers := []int{}
     re, err := regexp.Compile(`^Wallet (?P<num>[0-9]+)$`)
     if err != nil {
         return err
     }
     for _, wallet := range wallets {
         if re.MatchString(wallet.Name) {
-            num, err := strconv.ParseUint(re.ReplaceAllString(wallet.Name, "${num}"), 10, 64)
+            num, err := strconv.Atoi(re.ReplaceAllString(wallet.Name, "${num}"))
             if err != nil {
                 return err
             }
@@ -99,7 +119,7 @@ func (h *Handler) ServeNewWalletForm(c *fiber.Ctx) error {
             numbers = append(numbers, num)
         }
     }
-    var nextnum uint64 = 0
+    var nextnum int = 0
     for slices.Contains(numbers, nextnum) {
         nextnum++
     }
@@ -114,15 +134,47 @@ func (h *Handler) ServeNewWalletForm(c *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) ServeEditwWalletForm(c *fiber.Ctx) error {
-    id := c.Params("id")
-    wallet, err := h.Svc.GetWallet(id)
+func (h *Handler) ServeWalletEditForm(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+	if err != nil {
+		return err
+	}
+    wallet, err := h.Svc.GetWallet(walletId)
 	if err != nil {
 		return err
 	}
 
 	return c.Render("wallet-form-edit", fiber.Map{
         "Wallet": wallet,
+	})
+}
+
+func (h *Handler) ServeWalletTransferCreateForm(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+    if err != nil {
+        return err
+    }
+
+    wallets, err := h.Svc.GetWallets()
+    if err != nil {
+        return err
+    }
+
+    otherWallets := []app.Wallet{}
+    for _, wallet := range wallets {
+        if wallet.Id != walletId {
+            otherWallets = append(otherWallets, wallet)
+        }
+    }
+	return c.Render("wallet-transfer-create", fiber.Map{
+        "WalletId": walletId,
+        "Ammount": 0,
+        "AssetSymbol": "USD",
+        "Types": []app.WalletTransferType{
+            app.Deposit,
+            app.Withdrawal,
+        },
+        "Wallets": otherWallets,
 	})
 }
 
@@ -140,13 +192,99 @@ func (h *Handler) ServePostWallet(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ServePutWallet(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+    if err != nil {
+        return err
+    }
+
     wallet := new(app.Wallet)
     if err := c.BodyParser(wallet); err != nil {
         return err
     }
+    wallet.Id = walletId
     if err := h.Svc.PutWallet(*wallet); err != nil {
         return err
     }
     c.Set("HX-Trigger-After-Swap", "walletEdited")
     return nil
+}
+
+func (h *Handler) ServePostWalletTransfer(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+    if err != nil {
+        return err
+    }
+    walletTrasferDTO := new(app.WalletTransferDTO)
+    if err := c.BodyParser(walletTrasferDTO); err != nil {
+        return err
+    }
+
+    transfer, err := h.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
+    if err := h.Svc.PostTransfer(transfer); err != nil {
+        return err
+    }
+    c.Set("HX-Trigger-After-Swap", "walletTransferCreated")
+    return nil
+}
+
+func (h *Handler) ServePutWalletTransfer(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+    if err != nil {
+        return err
+    }
+    walletTrasferDTO := new(app.WalletTransferDTO)
+    if err := c.BodyParser(walletTrasferDTO); err != nil {
+        return err
+    }
+
+    transfer, err := h.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
+    if err := h.Svc.PutTransfer(transfer); err != nil {
+        return err
+    }
+    c.Set("HX-Trigger-After-Swap", "walletTransferEdited")
+    return nil
+}
+
+func (h *Handler) TransferToWalletTransferDTO(transfer app.Transfer, walletId int) (app.WalletTransferDTO, error) {
+    walletTransferDTO := app.WalletTransferDTO{}
+    walletTransferDTO.Timestamp = transfer.TimestampUtc.Local()
+    walletTransferDTO.Ammount = transfer.Ammount
+    walletTransferDTO.AssetSymbol = transfer.AssetSymbol
+
+    var otherWalletId int
+    if transfer.ToWalletId == walletId {
+        walletTransferDTO.TypeAction = app.Deposit.Action
+        otherWalletId = transfer.FromWalletId
+    } else {
+        walletTransferDTO.TypeAction = app.Withdrawal.Action
+        otherWalletId = transfer.ToWalletId
+    }
+
+    otherWallet, err := h.Svc.GetWallet(otherWalletId)
+    if err != nil {
+        return walletTransferDTO, err
+    }
+
+    walletTransferDTO.OtherWalletId = otherWallet.Id
+    walletTransferDTO.OtherWalletName = otherWallet.Name
+
+    return walletTransferDTO, nil
+}
+
+func (h *Handler) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransferDTO, walletId int) (app.Transfer, error) {
+    transfer := app.Transfer{}
+    transfer.TimestampUtc = walletTransferDTO.Timestamp.UTC()
+    transfer.Ammount = walletTransferDTO.Ammount
+    // transfer.AssetSymbol = walletTransferDTO.AssetSymbol
+    transfer.AssetSymbol = "USD"
+
+    if walletTransferDTO.TypeAction == app.Deposit.Action {
+        transfer.FromWalletId = walletTransferDTO.OtherWalletId
+        transfer.ToWalletId = walletId
+    } else {
+        transfer.FromWalletId = walletId
+        transfer.ToWalletId = walletTransferDTO.OtherWalletId
+    }
+
+    return transfer, nil
 }

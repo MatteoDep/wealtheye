@@ -159,14 +159,17 @@ form {
   flex-wrap: nowrap;
 }
 
-.form-field label {
-  width: 25%;
+.form-field .gap {
+  width: 20px;
 }
 
-.form-field input {
+.form-field .three-quarters {
   width: 75%;
 }
 
+.form-field .one-quarter {
+  width: 25%;
+}
 
 .form-buttons {
   margin-top: 20px;

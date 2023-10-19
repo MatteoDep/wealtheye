@@ -25,3 +25,12 @@ type Wallet struct {
 	Name     string
 	ValueUsd float64
 }
+
+type Transfer struct {
+	Id           int
+	TimestampUtc time.Time
+	Ammount      float64
+	AssetSymbol  string
+	FromWalletId int
+	ToWalletId   int
+}

@@ -10,9 +10,14 @@ type Service interface {
 	PostPrices(prices []Price) error
 
 	GetWallets() ([]Wallet, error)
-	GetWallet(name string) (Wallet, error)
+	GetWallet(id int) (Wallet, error)
 	PostWallet(wallet Wallet) error
 	PutWallet(wallet Wallet) error
+
+    GetTransfers() ([]Transfer, error)
+    GetWalletTransfers(walletId int) ([]Transfer, error)
+    PostTransfer(transfer Transfer) error
+    PutTransfer(transfer Transfer) error
 }
 
 type PriceApi interface {

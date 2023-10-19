@@ -1,14 +1,17 @@
 {{block "wallet-page" .}}
 <div id="wallet-page"
-     hx-get="/wallet-page/{{.Wallet.Id}}" hx-trigger="walletEdited from:body" hx-swap="outerHTML">
+     hx-get="/wallet-page/{{.Wallet.Id}}"
+     hx-trigger="walletEdited from:body, walletTransferCreated from:body, walletTransferEdited from:body"
+     hx-swap="outerHTML">
   <div class="page-title">
     <h2>{{.Wallet.Name}}</h2>
   </div>
   <section id="wallet-overview-section">
     {{template "wallet-overview-section" .}}
   </section>
-  <section id="wallet-transactions-section">
-    {{template "wallet-transactions-section" .}}
+  <section id="wallet-transfers-section">
+    <h3>Transfers</h3>
+    {{template "wallet-transfers-section" .}}
   </section>
 </div>
 {{end}}
@@ -18,16 +21,40 @@
 <div class="wallet-value">
   Total Value: {{.Wallet.ValueUsd}}
 </div>
-<div class="edit-button">
-  <button class="clickable"
-        hx-get="/edit-wallet-form/{{.Wallet.Id}}"
-        hx-target="#dialog" hx-on:click="showModal()" hx-swap="innerHTML">
-    edit
+<div class="buttons-row">
+  <button class="clickable" hx-get="/wallet-edit-form/{{.Wallet.Id}}" hx-target="#dialog" hx-on:click="showModal()"
+    hx-swap="innerHTML">
+    Edit Wallet
   </button>
 </div>
 {{end}}
 
 
-{{block "wallet-transactions-section" .}}
-  <h3>Transactions</h3>
+{{block "wallet-transfers-section" .}}
+{{template "wallet-transfers-table" .}}
+<div class="buttons-row">
+  <button class="clickable" hx-get="/wallet-transfer-create-form/{{.Wallet.Id}}" hx-target="#dialog" hx-on:click="showModal()"
+    hx-swap="innerHTML">
+    New transfer
+  </button>
+</div>
+{{end}}
+
+{{block "wallet-transfers-table" .}}
+<table class="wallet-transfers-table">
+  {{range .WalletTransfers}}
+  {{template "wallet-transfer-row" .}}
+  {{end}}
+</table>
+{{end}}
+
+{{block "wallet-transfer-row" .}}
+<tr>
+  <td>{{.Timestamp}}</td>
+  <td class="{{.TypeAction}}">{{.Ammount}}</td>
+  <td>{{.AssetSymbol}}</td>
+  <td>
+    {{.OtherWalletName}}
+  </td>
+</tr>
 {{end}}

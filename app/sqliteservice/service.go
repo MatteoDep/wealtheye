@@ -210,7 +210,7 @@ func (s *Service) GetWallets() ([]app.Wallet, error) {
 	return wallets, nil
 }
 
-func (s *Service) GetWallet(id string) (app.Wallet, error) {
+func (s *Service) GetWallet(id int) (app.Wallet, error) {
 	queryStr := `
         SELECT *
         FROM wallet
@@ -252,16 +252,128 @@ func (s *Service) PostWallet(wallet app.Wallet) error {
 }
 
 func (s *Service) PutWallet(wallet app.Wallet) error {
-    insertStr := `
+    updateStr := `
     UPDATE wallet
     SET
         name = $1,
         value_usd = $2;
     `
     _, err := s.DB.Exec(
-        insertStr,
+        updateStr,
         wallet.Name,
         wallet.ValueUsd,
+    )
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (s *Service) GetTransfers() ([]app.Transfer, error) {
+	queryStr := `
+        SELECT *
+        FROM transfer;
+    `
+	rows, err := s.DB.Query(queryStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transfers []app.Transfer
+    var transfer app.Transfer
+	for rows.Next() {
+		err := rows.Scan(
+            &transfer.Id,
+            &transfer.TimestampUtc,
+            &transfer.Ammount,
+            &transfer.AssetSymbol,
+            &transfer.FromWalletId,
+            &transfer.ToWalletId,
+		)
+		if err != nil {
+			return transfers, err
+		}
+		transfers = append(transfers, transfer)
+	}
+
+	if err := rows.Err(); err != nil {
+		return transfers, err
+	}
+
+	return transfers, nil
+}
+
+func (s *Service) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
+	queryStr := `
+        SELECT *
+        FROM transfer
+        where from_wallet_id = $1
+            or to_wallet_id = $1;
+    `
+	rows, err := s.DB.Query(queryStr, walletId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transfers []app.Transfer
+    var transfer app.Transfer
+	for rows.Next() {
+		err := rows.Scan(
+            &transfer.Id,
+            &transfer.TimestampUtc,
+            &transfer.Ammount,
+            &transfer.AssetSymbol,
+            &transfer.FromWalletId,
+            &transfer.ToWalletId,
+		)
+		if err != nil {
+			return transfers, err
+		}
+		transfers = append(transfers, transfer)
+	}
+
+	if err := rows.Err(); err != nil {
+		return transfers, err
+	}
+
+	return transfers, nil
+}
+
+func (s *Service) PostTransfer(transfer app.Transfer) error {
+    insertStr := `
+    INSERT INTO transfer (ammount, from_wallet_id, to_wallet_id, asset_symbol)
+    VALUES ($1, $2, $3, $4);
+    `
+    _, err := s.DB.Exec(
+        insertStr,
+        transfer.Ammount,
+        transfer.FromWalletId,
+        transfer.ToWalletId,
+        transfer.AssetSymbol,
+    )
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (s *Service) PutTransfer(transfer app.Transfer) error {
+    updateStr := `
+    UPDATE transfer
+    SET
+        ammount = $1,
+        from_wallet_id = $2,
+        to_wallet_id = $3,
+        asset_symbol = $4;
+    `
+    _, err := s.DB.Exec(
+        updateStr,
+        transfer.Ammount,
+        transfer.FromWalletId,
+        transfer.ToWalletId,
+        transfer.AssetSymbol,
     )
     if err != nil {
         return err
