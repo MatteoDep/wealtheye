@@ -1,10 +1,9 @@
-package alphavantageapi
+package priceapi
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -56,7 +55,6 @@ func (p *PriceApi) GetDailyPrices(
         priceLabel = "4a. close (USD)"
         timeSeriesLabel += "(Digital Currency Daily)"
     } else {
-        log.Println("Undefined asset type", asset.Type)
         return nil, UndefinedTypeError{asset: &asset}
     }
 	reqUrl += "&apikey=" + p.Cfg.PriceApi.Key

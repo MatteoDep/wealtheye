@@ -2,26 +2,18 @@ package app
 
 import "time"
 
-type WalletTransferType struct {
-	Action      string
-	Preposition string
-}
+type WalletTransferType string
 
-var Deposit = WalletTransferType{
-	Action:      "Deposit",
-	Preposition: "from",
-}
-
-var Withdrawal = WalletTransferType{
-	Action:      "Withdrawal",
-	Preposition: "to",
-}
+const (
+	Deposit = "from"
+	Withdrawal = "to"
+)
 
 type WalletTransferDTO struct {
 	Timestamp       time.Time
 	Ammount         float64
 	AssetSymbol     string
-	TypeAction      string
+	Type            WalletTransferType
 	OtherWalletId   int
 	OtherWalletName string
 }

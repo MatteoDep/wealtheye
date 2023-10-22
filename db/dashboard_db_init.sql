@@ -3,14 +3,12 @@ BEGIN TRANSACTION;
 CREATE TABLE asset (
 	symbol TEXT PRIMARY KEY,
 	name TEXT NOT NULL,
-	type TEXT NOT NULL, -- 'forex', 'crypto', 'stock', 'commodity', 'bond'
-	value_usd REAL,
-	last_synched TIMESTAMP
+	type TEXT NOT NULL -- 'forex', 'crypto', 'stock', 'commodity', 'bond'
 );
 CREATE TABLE wallet(
 	id INTEGER PRIMARY KEY,
 	name TEXT NOT NULL,
-	value_usd REAL DEFAULT 0
+	value_usd REAL NOT NULL DEFAULT 0
 );
 CREATE TABLE transfer(
 	id INTEGER PRIMARY KEY,

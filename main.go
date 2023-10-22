@@ -5,9 +5,10 @@ import (
 	"log"
 
 	"github.com/MatteoDep/wealtheye/app"
-	"github.com/MatteoDep/wealtheye/app/alphavantageapi"
 	"github.com/MatteoDep/wealtheye/app/handler"
-	"github.com/MatteoDep/wealtheye/app/sqliteservice"
+	"github.com/MatteoDep/wealtheye/app/priceapi"
+	"github.com/MatteoDep/wealtheye/app/repository"
+	"github.com/MatteoDep/wealtheye/app/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,12 +27,16 @@ func main() {
     }
     defer db.Close()
 
-    pa := alphavantageapi.PriceApi{
+    rep := repository.Repository{
+        DB: db,
+    }
+
+    pa := priceapi.PriceApi{
         Cfg: &cfg,
     }
 
-    svc := sqliteservice.Service{
-        DB: db,
+    svc := service.Service{
+        Rep: &rep,
         PA: &pa,
     }
 

@@ -51,10 +51,10 @@
 {{block "wallet-transfer-row" .}}
 <tr>
   <td>{{.Timestamp}}</td>
-  <td class="{{.TypeAction}}">{{.Ammount}}</td>
+  <td class="transfer-{{.Type}}">{{.Ammount}}</td>
   <td>{{.AssetSymbol}}</td>
   <td>
-    {{.OtherWalletName}}
+    {{.Type}} {{.OtherWalletName}}
   </td>
 </tr>
 {{end}}

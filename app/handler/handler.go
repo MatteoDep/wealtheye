@@ -18,15 +18,23 @@ type Handler struct {
 func (h *Handler) ServeIndex(c *fiber.Ctx) error {
 	app_name := "WealthEye"
 	return c.Render("index", fiber.Map{
+        "PageGet": "/holdings-page",
 		"Title":  app_name,
 	}, "layouts/main")
 }
 
 func (h *Handler) ServeHoldingsPage(c *fiber.Ctx) error {
 	assets, err := h.Svc.GetAssets()
+	if err != nil {
+        return fmt.Errorf("On GetAssets: %s.", err.Error())
+	}
+    err = h.Svc.UpdateWalletsValue()
+	if err != nil {
+        return fmt.Errorf("On UpdateWalletsValue: %s.", err.Error())
+	}
     wallets, err := h.Svc.GetWallets()
 	if err != nil {
-		return err
+        return fmt.Errorf("On GetWallets: %s.", err.Error())
 	}
 
 	return c.Render("holdings-page", fiber.Map{
@@ -74,6 +82,11 @@ func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+    err = h.Svc.UpdateWalletValue(walletId)
+    if err != nil {
+        return err
+    }
+
     wallet, err := h.Svc.GetWallet(walletId)
 	if err != nil {
 		return err
@@ -183,7 +196,7 @@ func (h *Handler) ServePostWallet(c *fiber.Ctx) error {
     if err := c.BodyParser(wallet); err != nil {
         return err
     }
-    if err := h.Svc.PostWallet(*wallet); err != nil {
+    if err := h.Svc.PostWallet(wallet.Name); err != nil {
         return err
     }
 
@@ -202,7 +215,7 @@ func (h *Handler) ServePutWallet(c *fiber.Ctx) error {
         return err
     }
     wallet.Id = walletId
-    if err := h.Svc.PutWallet(*wallet); err != nil {
+    if err := h.Svc.UpdateWalletName(wallet.Id, wallet.Name); err != nil {
         return err
     }
     c.Set("HX-Trigger-After-Swap", "walletEdited")
@@ -223,6 +236,7 @@ func (h *Handler) ServePostWalletTransfer(c *fiber.Ctx) error {
     if err := h.Svc.PostTransfer(transfer); err != nil {
         return err
     }
+
     c.Set("HX-Trigger-After-Swap", "walletTransferCreated")
     return nil
 }
@@ -238,9 +252,10 @@ func (h *Handler) ServePutWalletTransfer(c *fiber.Ctx) error {
     }
 
     transfer, err := h.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
-    if err := h.Svc.PutTransfer(transfer); err != nil {
+    if err := h.Svc.UpdateTransfer(transfer); err != nil {
         return err
     }
+
     c.Set("HX-Trigger-After-Swap", "walletTransferEdited")
     return nil
 }
@@ -253,10 +268,10 @@ func (h *Handler) TransferToWalletTransferDTO(transfer app.Transfer, walletId in
 
     var otherWalletId int
     if transfer.ToWalletId == walletId {
-        walletTransferDTO.TypeAction = app.Deposit.Action
+        walletTransferDTO.Type = app.Deposit
         otherWalletId = transfer.FromWalletId
     } else {
-        walletTransferDTO.TypeAction = app.Withdrawal.Action
+        walletTransferDTO.Type = app.Withdrawal
         otherWalletId = transfer.ToWalletId
     }
 
@@ -278,7 +293,7 @@ func (h *Handler) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransf
     // transfer.AssetSymbol = walletTransferDTO.AssetSymbol
     transfer.AssetSymbol = "USD"
 
-    if walletTransferDTO.TypeAction == app.Deposit.Action {
+    if walletTransferDTO.Type == app.Deposit {
         transfer.FromWalletId = walletTransferDTO.OtherWalletId
         transfer.ToWalletId = walletId
     } else {
@@ -288,3 +303,4 @@ func (h *Handler) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransf
 
     return transfer, nil
 }
+

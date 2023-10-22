@@ -182,3 +182,11 @@ form {
 .form-button {
   width: 100%;
 }
+
+.transfer-from {
+  color: green;
+}
+
+.transfer-to {
+  color: red;
+}

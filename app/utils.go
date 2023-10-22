@@ -15,7 +15,6 @@ func GetMissingTimestamps(
     prices []Price,
     fromTimestamp time.Time,
     toTimestamp time.Time,
-    skipFestivities bool,
 ) []time.Time {
     missingTimestamps := []time.Time{}
     fromTimestamp = fromTimestamp.Round(24 * time.Hour)
@@ -23,11 +22,6 @@ func GetMissingTimestamps(
 
     found := false
     for ts := fromTimestamp; ts.Before(toTimestamp); ts = ts.AddDate(0, 0, 1) {
-        if skipFestivities &&
-            ((ts.Weekday() == time.Saturday) || (ts.Weekday() == time.Sunday)) {
-            continue
-        }
-
         for _, price := range prices {
             if price.TimestampUtc.Equal(ts) {
                 found = true

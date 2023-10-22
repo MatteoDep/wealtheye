@@ -31,14 +31,6 @@
     <div class="gap"></div>
     <input type="text" name="Name" value="{{.Wallet.Name}}" class="three-quarters">
   </div>
-  <div class="form-field">
-    <label for="value" class="one-quarter">Starting Value:</label>
-    <div class="gap"></div>
-    <input type="number" name="ValueUsd" value="{{.Wallet.ValueUsd}}" class="three-quarters">
-    $
-    <!-- todo: select asset -->
-    <!-- {{template "assets-selection" .}} -->
-  </div>
 </div>
 {{template "form-buttons"}}
 {{end}}
@@ -58,9 +50,9 @@
 {{block "wallet-transfer-form-content" .}}
 <div class="form-fields">
   <div class="form-field">
-    <select name="TypeAction" id="wallet-transfer-type" class="one-quarter">
+    <select name="Type" id="wallet-transfer-type" class="one-quarter">
       {{range .Types}}
-      <option value="{{.Action}}">{{.Preposition}}</option>
+      <option value="{{.}}">{{.}}</option>
       {{end}}
     </select>
     <div class="gap"></div>

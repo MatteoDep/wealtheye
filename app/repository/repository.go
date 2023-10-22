@@ -1,25 +1,23 @@
-package sqliteservice
+package repository
 
 import (
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Service struct {
+type Repository struct {
 	DB *sql.DB
-    PA app.PriceApi
 }
 
-func (s *Service) GetAssets() ([]app.Asset, error) {
+func (r *Repository) GetAssets() ([]app.Asset, error) {
 	queryStr := `
         select *
         from asset
     `
-	rows, err := s.DB.Query(queryStr)
+	rows, err := r.DB.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +30,6 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
 			&asset.Symbol,
             &asset.Name,
             &asset.Type,
-			&asset.ValueUsd,
-			&asset.LastSynched,
 		)
 		if err != nil {
 			return assets, err
@@ -48,21 +44,19 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
 	return assets, nil
 }
 
-func (s *Service) GetAsset(symbol string) (app.Asset, error) {
+func (r *Repository) GetAsset(symbol string) (app.Asset, error) {
 	queryStr := `
         SELECT *
         FROM asset
         WHERE symbol = $1
     `
-	row := s.DB.QueryRow(queryStr, symbol)
+	row := r.DB.QueryRow(queryStr, symbol)
 
 	var asset app.Asset
 	err := row.Scan(
 		&asset.Symbol,
         &asset.Name,
         &asset.Type,
-		&asset.ValueUsd,
-		&asset.LastSynched,
 	)
 	if err != nil {
 		return asset, err
@@ -75,13 +69,47 @@ func (s *Service) GetAsset(symbol string) (app.Asset, error) {
 	return asset, nil
 }
 
-func (s *Service) GetPrices(
+func (r *Repository) UpdateAssetValue(symbol string, valueUsd float64, lastSynched time.Time) (error) {
+    updateStr := `
+        UPDATE asset
+        SET
+            value_usd = $1,
+            last_synched = $2
+        WHERE
+            symbol = $3;
+    `
+    _, err := r.DB.Exec(
+        updateStr,
+        valueUsd,
+        lastSynched,
+        symbol,
+    )
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (r *Repository) GetPrice(
     asset app.Asset,
-    fromTimestamp time.Time,
-    toTimestamp time.Time,
+    timestampUtc time.Time,
+) (app.Price, error) {
+    dayStart := timestampUtc.Truncate(24 * time.Hour)
+    dayEnd := dayStart.AddDate(0, 0, 1)
+    prices, err := r.GetPrices(asset, dayStart, dayEnd)
+    if err != nil || len(prices) < 1 {
+        return app.Price{}, err
+    }
+    return prices[0], nil
+}
+
+func (r *Repository) GetPrices(
+    asset app.Asset,
+    fromTimestampUtc time.Time,
+    toTimestampUtc time.Time,
 ) ([]app.Price, error) {
     prices := []app.Price{}
-    if asset.Symbol == "USD" || toTimestamp.Sub(fromTimestamp) < 24 * time.Hour {
+    if asset.Symbol == "USD" || toTimestampUtc.Sub(fromTimestampUtc) < 24 * time.Hour {
         return prices, nil
     }
 
@@ -91,8 +119,9 @@ func (s *Service) GetPrices(
         WHERE asset_symbol = $1
         AND timestamp_utc >= $2
         AND timestamp_utc <= $3
+        ORDER BY timestamp_utc;
     `
-	rows, err := s.DB.Query(queryStr, asset.Symbol, fromTimestamp, toTimestamp)
+	rows, err := r.DB.Query(queryStr, asset.Symbol, fromTimestampUtc, toTimestampUtc)
 	if err != nil {
 		return nil, err
 	}
@@ -116,30 +145,10 @@ func (s *Service) GetPrices(
 		return prices, err
 	}
 
-    missingTimestamps := app.GetMissingTimestamps(
-        prices,
-        fromTimestamp,
-        toTimestamp,
-        asset.Type != "crypto",
-    )
-
-    pricesToAppend, err := s.PA.GetDailyPrices(asset, missingTimestamps)
-    if err != nil {
-        return prices, err
-    }
-
-    prices = append(prices, pricesToAppend...)
-    app.SortPrices(prices)
-
-    err = s.PostPrices(pricesToAppend)
-    if err != nil {
-        log.Println("Error during prices insert.", err)
-    }
-
 	return prices, nil
 }
 
-func (s *Service) PostPrices(prices []app.Price) error {
+func (r *Repository) PostPrices(prices []app.Price) error {
     insertStr := `
     INSERT INTO price_daily (asset_symbol, timestamp_utc, value_usd)
     VALUES ($1, $2, $3);
@@ -152,7 +161,7 @@ func (s *Service) PostPrices(prices []app.Price) error {
     WHERE symbol = $1;
     `
     for _, price := range prices {
-        _, err := s.DB.Exec(
+        _, err := r.DB.Exec(
             insertStr,
             price.AssetSymbol,
             price.TimestampUtc,
@@ -164,7 +173,7 @@ func (s *Service) PostPrices(prices []app.Price) error {
 
         now := time.Now().UTC()
         if now.Sub(price.TimestampUtc).Abs().Hours() < 24 {
-            _, err := s.DB.Exec(
+            _, err := r.DB.Exec(
                 updateStr,
                 price.AssetSymbol,
                 now,
@@ -178,12 +187,12 @@ func (s *Service) PostPrices(prices []app.Price) error {
     return nil
 }
 
-func (s *Service) GetWallets() ([]app.Wallet, error) {
+func (r *Repository) GetWallets() ([]app.Wallet, error) {
 	queryStr := `
         SELECT *
         FROM wallet
     `
-	rows, err := s.DB.Query(queryStr)
+	rows, err := r.DB.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}
@@ -210,13 +219,13 @@ func (s *Service) GetWallets() ([]app.Wallet, error) {
 	return wallets, nil
 }
 
-func (s *Service) GetWallet(id int) (app.Wallet, error) {
+func (r *Repository) GetWallet(id int) (app.Wallet, error) {
 	queryStr := `
         SELECT *
         FROM wallet
         WHERE id = $1
     `
-	row := s.DB.QueryRow(queryStr, id)
+	row := r.DB.QueryRow(queryStr, id)
 
 	var wallet app.Wallet
 	err := row.Scan(
@@ -235,15 +244,14 @@ func (s *Service) GetWallet(id int) (app.Wallet, error) {
 	return wallet, nil
 }
 
-func (s *Service) PostWallet(wallet app.Wallet) error {
+func (r *Repository) PostWallet(name string) error {
     insertStr := `
-    INSERT INTO wallet (name, value_usd)
-    VALUES ($1, $2);
+    INSERT INTO wallet (name)
+    VALUES ($1);
     `
-    _, err := s.DB.Exec(
+    _, err := r.DB.Exec(
         insertStr,
-        wallet.Name,
-        wallet.ValueUsd,
+        name,
     )
     if err != nil {
         return err
@@ -251,17 +259,18 @@ func (s *Service) PostWallet(wallet app.Wallet) error {
     return nil
 }
 
-func (s *Service) PutWallet(wallet app.Wallet) error {
+func (r *Repository) UpdateWalletName(id int, name string) error {
     updateStr := `
     UPDATE wallet
     SET
-        name = $1,
-        value_usd = $2;
+        name = $1
+    WHERE
+        id = $2;
     `
-    _, err := s.DB.Exec(
+    _, err := r.DB.Exec(
         updateStr,
-        wallet.Name,
-        wallet.ValueUsd,
+        name,
+        id,
     )
     if err != nil {
         return err
@@ -269,12 +278,31 @@ func (s *Service) PutWallet(wallet app.Wallet) error {
     return nil
 }
 
-func (s *Service) GetTransfers() ([]app.Transfer, error) {
+func (r *Repository) UpdateWalletValue(id int, valueUsd float64) error {
+    updateStr := `
+    UPDATE wallet
+    SET
+        value_usd = $1
+    WHERE
+        id = $2;
+    `
+    _, err := r.DB.Exec(
+        updateStr,
+        valueUsd,
+        id,
+    )
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (r *Repository) GetTransfers() ([]app.Transfer, error) {
 	queryStr := `
         SELECT *
         FROM transfer;
     `
-	rows, err := s.DB.Query(queryStr)
+	rows, err := r.DB.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}
@@ -304,14 +332,14 @@ func (s *Service) GetTransfers() ([]app.Transfer, error) {
 	return transfers, nil
 }
 
-func (s *Service) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
+func (r *Repository) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
 	queryStr := `
         SELECT *
         FROM transfer
         where from_wallet_id = $1
             or to_wallet_id = $1;
     `
-	rows, err := s.DB.Query(queryStr, walletId)
+	rows, err := r.DB.Query(queryStr, walletId)
 	if err != nil {
 		return nil, err
 	}
@@ -341,12 +369,12 @@ func (s *Service) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
 	return transfers, nil
 }
 
-func (s *Service) PostTransfer(transfer app.Transfer) error {
+func (r *Repository) PostTransfer(transfer app.Transfer) error {
     insertStr := `
     INSERT INTO transfer (ammount, from_wallet_id, to_wallet_id, asset_symbol)
     VALUES ($1, $2, $3, $4);
     `
-    _, err := s.DB.Exec(
+    _, err := r.DB.Exec(
         insertStr,
         transfer.Ammount,
         transfer.FromWalletId,
@@ -359,7 +387,7 @@ func (s *Service) PostTransfer(transfer app.Transfer) error {
     return nil
 }
 
-func (s *Service) PutTransfer(transfer app.Transfer) error {
+func (r *Repository) UpdateTransfer(transfer app.Transfer) error {
     updateStr := `
     UPDATE transfer
     SET
@@ -368,7 +396,7 @@ func (s *Service) PutTransfer(transfer app.Transfer) error {
         to_wallet_id = $3,
         asset_symbol = $4;
     `
-    _, err := s.DB.Exec(
+    _, err := r.DB.Exec(
         updateStr,
         transfer.Ammount,
         transfer.FromWalletId,
