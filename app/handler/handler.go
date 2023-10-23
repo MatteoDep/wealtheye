@@ -16,14 +16,20 @@ type Handler struct {
 }
 
 func (h *Handler) ServeIndex(c *fiber.Ctx) error {
-	app_name := "WealthEye"
 	return c.Render("index", fiber.Map{
         "PageGet": "/holdings-page",
-		"Title":  app_name,
+		"Title":  "WealthEye",
 	}, "layouts/main")
 }
 
 func (h *Handler) ServeHoldingsPage(c *fiber.Ctx) error {
+    if c.Get("HX-Request") != "true" {
+        return c.Render("index", fiber.Map{
+            "PageGet": "/holdings-page",
+            "Title": "WealthEye",
+        }, "layouts/main")
+    }
+
 	assets, err := h.Svc.GetAssets()
 	if err != nil {
         return fmt.Errorf("On GetAssets: %s.", err.Error())
@@ -37,6 +43,7 @@ func (h *Handler) ServeHoldingsPage(c *fiber.Ctx) error {
         return fmt.Errorf("On GetWallets: %s.", err.Error())
 	}
 
+    c.Set("HX-Push-Url", "/holdings-page")
 	return c.Render("holdings-page", fiber.Map{
 		"Assets": assets,
         "Wallets": wallets,
@@ -82,6 +89,14 @@ func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
+    if c.Get("HX-Request") != "true" {
+        return c.Render("index", fiber.Map{
+            "PageGet": fmt.Sprintf("/wallet-page/%d", walletId),
+            "Title": "WealthEye",
+        }, "layouts/main")
+    }
+
     err = h.Svc.UpdateWalletValue(walletId)
     if err != nil {
         return err
@@ -105,6 +120,7 @@ func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
         walletTransfersDTO = append(walletTransfersDTO, walletTransferDTO)
     }
 
+    c.Set("HX-Push-Url", fmt.Sprintf("/wallet-page/%d", walletId))
 	return c.Render("wallet-page", fiber.Map{
         "Wallet": wallet,
         "WalletTransfers": walletTransfersDTO,

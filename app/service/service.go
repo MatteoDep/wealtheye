@@ -27,6 +27,9 @@ func (s *Service) GetPrice(
 ) (app.Price, error) {
     dayStart := timestampUtc.Truncate(24 * time.Hour)
     prices, err := s.GetPrices(asset, dayStart, timestampUtc)
+    if len(prices) < 1 {
+        prices, err = s.GetPrices(asset, dayStart.AddDate(0, 0, -1), dayStart)
+    }
     if err != nil || len(prices) < 1 {
         return app.Price{}, err
     }
