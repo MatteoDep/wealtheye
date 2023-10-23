@@ -1,6 +1,7 @@
 package service
 
 import (
+	"database/sql"
 	"log"
 	"time"
 
@@ -144,7 +145,7 @@ func (s *Service) UpdateWalletValue(id int) (error) {
             return err
         }
 
-        if transfer.FromWalletId == id {
+        if transfer.FromWalletId.Valid && int(transfer.FromWalletId.Int64) == id {
             ammountUsd *= -1
         }
         valueUsd += ammountUsd
@@ -167,4 +168,87 @@ func (s *Service) PostTransfer(transfer app.Transfer) (error) {
 
 func (s *Service) UpdateTransfer(transfer app.Transfer) (error) {
     return s.Rep.UpdateTransfer(transfer)
+}
+
+func (s *Service) TransferToWalletTransferDTO(transfer app.Transfer, walletId int) (app.WalletTransferDTO, error) {
+    walletTransferDTO := app.WalletTransferDTO{}
+    walletTransferDTO.Timestamp = transfer.TimestampUtc.Local()
+    walletTransferDTO.Ammount = transfer.Ammount
+    walletTransferDTO.AssetSymbol = transfer.AssetSymbol
+
+    var otherWalletId int
+    if int(transfer.ToWalletId.Int64) == walletId {
+        walletTransferDTO.Type = app.Deposit
+        if transfer.FromWalletId.Valid {
+            otherWalletId = int(transfer.FromWalletId.Int64)
+        } else {
+            otherWalletId = -1
+        }
+    } else {
+        walletTransferDTO.Type = app.Withdrawal
+        if transfer.ToWalletId.Valid {
+            otherWalletId = int(transfer.ToWalletId.Int64)
+        } else {
+            otherWalletId = -1
+        }
+    }
+    walletTransferDTO.OtherWalletId = otherWalletId
+
+    if otherWalletId == -1 {
+        walletTransferDTO.OtherWalletName = s.GetExternalWalletName(walletTransferDTO.Type)
+    } else {
+        otherWallet, err := s.GetWallet(otherWalletId)
+        if err != nil {
+            return walletTransferDTO, err
+        }
+        walletTransferDTO.OtherWalletName = otherWallet.Name
+    }
+
+
+    return walletTransferDTO, nil
+}
+
+func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransferDTO, walletId int) (app.Transfer, error) {
+    transfer := app.Transfer{}
+    transfer.TimestampUtc = walletTransferDTO.Timestamp.UTC()
+    transfer.Ammount = walletTransferDTO.Ammount
+    // transfer.AssetSymbol = walletTransferDTO.AssetSymbol
+    transfer.AssetSymbol = "USD"
+
+    var otherWalletId sql.NullInt64
+    if walletTransferDTO.OtherWalletId == -1 {
+        otherWalletId = sql.NullInt64{
+            Valid: false,
+        }
+    } else {
+        otherWalletId = sql.NullInt64{
+            Int64: int64(walletTransferDTO.OtherWalletId),
+            Valid: true,
+        }
+    }
+    if walletTransferDTO.Type == app.Deposit {
+        transfer.FromWalletId = otherWalletId
+        transfer.ToWalletId = sql.NullInt64{
+            Int64: int64(walletId),
+            Valid: true,
+        }
+    } else {
+        transfer.FromWalletId = sql.NullInt64{
+            Int64: int64(walletId),
+            Valid: true,
+        }
+        transfer.ToWalletId = otherWalletId
+    }
+
+    return transfer, nil
+}
+
+func (s *Service) GetExternalWalletName(walletTransferType app.WalletTransferType) string {
+    var externalWalletName string
+    if (walletTransferType == app.Deposit) {
+        externalWalletName = "Income/Gift"
+    } else {
+        externalWalletName = "Expense"
+    }
+    return externalWalletName
 }

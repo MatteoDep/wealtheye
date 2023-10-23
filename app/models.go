@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -28,6 +29,6 @@ type Transfer struct {
 	TimestampUtc time.Time
 	Ammount      float64
 	AssetSymbol  string
-	FromWalletId int
-	ToWalletId   int
+	FromWalletId sql.NullInt64
+	ToWalletId   sql.NullInt64
 }

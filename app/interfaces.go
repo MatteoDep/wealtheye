@@ -38,6 +38,10 @@ type Service interface {
 	PostWallet(name string) error
     PostTransfer(transfer Transfer) error
     UpdateTransfer(transfer Transfer) error
+
+    TransferToWalletTransferDTO(transfer Transfer, walletId int) (WalletTransferDTO, error)
+    WalletTransferDTOToTransfer(walletTransferDTO WalletTransferDTO, walletId int) (Transfer, error)
+    GetExternalWalletName(walletTransferType WalletTransferType) string
 }
 
 type PriceApi interface {

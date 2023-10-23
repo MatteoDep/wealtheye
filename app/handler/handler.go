@@ -50,6 +50,49 @@ func (h *Handler) ServeHoldingsPage(c *fiber.Ctx) error {
 	})
 }
 
+func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+	if err != nil {
+		return err
+	}
+
+    if c.Get("HX-Request") != "true" {
+        return c.Render("index", fiber.Map{
+            "PageGet": fmt.Sprintf("/wallet-page/%d", walletId),
+            "Title": "WealthEye",
+        }, "layouts/main")
+    }
+
+    err = h.Svc.UpdateWalletValue(walletId)
+    if err != nil {
+        return fmt.Errorf("On UpdateWalletValue: %s.", err.Error())
+    }
+
+    wallet, err := h.Svc.GetWallet(walletId)
+	if err != nil {
+        return fmt.Errorf("On GetWallet: %s.", err.Error())
+	}
+    transfers, err := h.Svc.GetWalletTransfers(walletId)
+	if err != nil {
+        return fmt.Errorf("On GetWalletTransfers: %s.", err.Error())
+	}
+
+    walletTransfersDTO := []app.WalletTransferDTO{}
+    for _, transfer := range transfers {
+        walletTransferDTO, err := h.Svc.TransferToWalletTransferDTO(transfer, walletId)
+        if err != nil {
+            return fmt.Errorf("On TransferToWalletTransferDTO: %s.", err.Error())
+        }
+        walletTransfersDTO = append(walletTransfersDTO, walletTransferDTO)
+    }
+
+    c.Set("HX-Push-Url", fmt.Sprintf("/wallet-page/%d", walletId))
+	return c.Render("wallet-page", fiber.Map{
+        "Wallet": wallet,
+        "WalletTransfers": walletTransfersDTO,
+	})
+}
+
 func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
     assetSymbol := c.Query("symbol")
 	asset, err := h.Svc.GetAsset(assetSymbol)
@@ -82,49 +125,6 @@ func (h *Handler) ServeWalletInfoCard(c *fiber.Ctx) error {
 	}
 
 	return c.Render("wallet-info-card", wallet)
-}
-
-func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
-    walletId, err := strconv.Atoi(c.Params("walletId"))
-	if err != nil {
-		return err
-	}
-
-    if c.Get("HX-Request") != "true" {
-        return c.Render("index", fiber.Map{
-            "PageGet": fmt.Sprintf("/wallet-page/%d", walletId),
-            "Title": "WealthEye",
-        }, "layouts/main")
-    }
-
-    err = h.Svc.UpdateWalletValue(walletId)
-    if err != nil {
-        return err
-    }
-
-    wallet, err := h.Svc.GetWallet(walletId)
-	if err != nil {
-		return err
-	}
-    transfers, err := h.Svc.GetWalletTransfers(walletId)
-	if err != nil {
-		return err
-	}
-
-    walletTransfersDTO := []app.WalletTransferDTO{}
-    for _, transfer := range transfers {
-        walletTransferDTO, err := h.TransferToWalletTransferDTO(transfer, walletId)
-        if err != nil {
-            return err
-        }
-        walletTransfersDTO = append(walletTransfersDTO, walletTransferDTO)
-    }
-
-    c.Set("HX-Push-Url", fmt.Sprintf("/wallet-page/%d", walletId))
-	return c.Render("wallet-page", fiber.Map{
-        "Wallet": wallet,
-        "WalletTransfers": walletTransfersDTO,
-	})
 }
 
 func (h *Handler) ServeWalletCreateForm(c *fiber.Ctx) error {
@@ -248,7 +248,7 @@ func (h *Handler) ServePostWalletTransfer(c *fiber.Ctx) error {
         return err
     }
 
-    transfer, err := h.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
+    transfer, err := h.Svc.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
     if err := h.Svc.PostTransfer(transfer); err != nil {
         return err
     }
@@ -267,7 +267,7 @@ func (h *Handler) ServePutWalletTransfer(c *fiber.Ctx) error {
         return err
     }
 
-    transfer, err := h.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
+    transfer, err := h.Svc.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
     if err := h.Svc.UpdateTransfer(transfer); err != nil {
         return err
     }
@@ -276,47 +276,10 @@ func (h *Handler) ServePutWalletTransfer(c *fiber.Ctx) error {
     return nil
 }
 
-func (h *Handler) TransferToWalletTransferDTO(transfer app.Transfer, walletId int) (app.WalletTransferDTO, error) {
-    walletTransferDTO := app.WalletTransferDTO{}
-    walletTransferDTO.Timestamp = transfer.TimestampUtc.Local()
-    walletTransferDTO.Ammount = transfer.Ammount
-    walletTransferDTO.AssetSymbol = transfer.AssetSymbol
-
-    var otherWalletId int
-    if transfer.ToWalletId == walletId {
-        walletTransferDTO.Type = app.Deposit
-        otherWalletId = transfer.FromWalletId
-    } else {
-        walletTransferDTO.Type = app.Withdrawal
-        otherWalletId = transfer.ToWalletId
-    }
-
-    otherWallet, err := h.Svc.GetWallet(otherWalletId)
-    if err != nil {
-        return walletTransferDTO, err
-    }
-
-    walletTransferDTO.OtherWalletId = otherWallet.Id
-    walletTransferDTO.OtherWalletName = otherWallet.Name
-
-    return walletTransferDTO, nil
+func (h *Handler) GetExternalWalletName(c *fiber.Ctx) error {
+    walletTransferType := app.WalletTransferType(c.Query("Type"))
+    externalWalletName := h.Svc.GetExternalWalletName(walletTransferType)
+	return c.Render("external-wallet-option", fiber.Map{
+        "Name": externalWalletName,
+	})
 }
-
-func (h *Handler) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransferDTO, walletId int) (app.Transfer, error) {
-    transfer := app.Transfer{}
-    transfer.TimestampUtc = walletTransferDTO.Timestamp.UTC()
-    transfer.Ammount = walletTransferDTO.Ammount
-    // transfer.AssetSymbol = walletTransferDTO.AssetSymbol
-    transfer.AssetSymbol = "USD"
-
-    if walletTransferDTO.Type == app.Deposit {
-        transfer.FromWalletId = walletTransferDTO.OtherWalletId
-        transfer.ToWalletId = walletId
-    } else {
-        transfer.FromWalletId = walletId
-        transfer.ToWalletId = walletTransferDTO.OtherWalletId
-    }
-
-    return transfer, nil
-}
-

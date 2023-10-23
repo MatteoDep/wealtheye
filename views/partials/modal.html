@@ -47,10 +47,18 @@
 </form>
 {{end}}
 
+{{block "external-wallet-option" .}}
+<option value="-1" id="external-wallet-option">
+  {{.Name}}
+</option>
+{{end}}
+
 {{block "wallet-transfer-form-content" .}}
 <div class="form-fields">
   <div class="form-field">
-    <select name="Type" id="wallet-transfer-type" class="one-quarter">
+    <select name="Type" id="wallet-transfer-type" class="one-quarter"
+            hx-get="/external-wallet-name" hx-target="#external-wallet-option"
+            hx-swap="outerHTML" hx-trigger="load, change">
       {{range .Types}}
       <option value="{{.}}">{{.}}</option>
       {{end}}
@@ -60,6 +68,7 @@
       {{range .Wallets}}
       <option value="{{.Id}}">{{.Name}}</option>
       {{end}}
+      {{template "external-wallet-option" .}}
     </select>
   </div>
   <div class="form-field">

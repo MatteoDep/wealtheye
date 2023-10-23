@@ -16,7 +16,7 @@ CREATE TABLE transfer(
 	ammount REAL NOT NULL,
 	asset_symbol TEXT NOT NULL,
 	from_wallet_id INTEGER,
-	to_wallet_id INTEGER NOT NULL,
+	to_wallet_id INTEGER,
 	FOREIGN KEY(asset_symbol) REFERENCES asset(symbol),
 	FOREIGN KEY(from_wallet_id) REFERENCES wallet(id),
 	FOREIGN KEY(to_wallet_id) REFERENCES wallet(id)
