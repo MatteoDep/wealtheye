@@ -52,7 +52,7 @@ func main() {
     app.Static("/static/", "./static")
 
 	app.Get("/", h.ServeIndex)
-	app.Get("/holdings-page", h.ServeHoldingsPage)
+	app.Get("/landing-page", h.ServeHoldingsPage)
     app.Get("/plot:symbol?", h.ServeBalancePlot)
     app.Get("/wallet-page/:walletId", h.ServeWalletPage)
     app.Get("/wallet-info-card/:walletId", h.ServeWalletInfoCard)

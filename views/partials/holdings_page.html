@@ -1,6 +1,6 @@
-{{block "holdings-page" .}}
-<div id="holdings-page"
-     hx-get="/holdings-page" hx-trigger="walletCreated from:body" hx-swap="outerHTML">
+{{block "landing-page" .}}
+<div id="landing-page"
+     hx-get="/landing-page" hx-trigger="walletCreated from:body" hx-swap="outerHTML">
   <div class="page-title">
     <h2>Holdings Overview</h2>
   </div>
@@ -67,7 +67,7 @@
 
 {{block "wallet-info-card" .}}
 <li>
-  <button class="card" hx-get="wallet-page/{{.Id}}" hx-target="#main-content" hx-swap="innerHTML">
+  <button class="card" hx-get="wallet-page/{{.Id}}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
     <div class="card-title">
       {{.Name}}
     </div>
