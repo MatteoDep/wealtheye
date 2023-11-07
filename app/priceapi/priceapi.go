@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
-	"golang.org/x/exp/slices"
 )
 
 type PriceApi struct {
@@ -32,12 +31,14 @@ func (ufe UndefinedTypeError) Error() string {
     return msg
 }
 
-func (p *PriceApi) GetDailyPrices(
+func (p *PriceApi) GetDailyPricesUsd(
     asset app.Asset,
-    timestamps []time.Time,
+    fromTimestamp time.Time,
+    toTimestamp time.Time,
 ) ([]app.Price, error) {
     prices := []app.Price{}
-    if asset.Symbol == "USD" || len(timestamps) == 0 {
+    if asset.Symbol == "USD" {
+        // todo
         return prices, nil
     }
 
@@ -76,15 +77,19 @@ func (p *PriceApi) GetDailyPrices(
 	}
 
     var result map[string]any
+    fromTimestamp = fromTimestamp.Round(24 * time.Hour).Add(-time.Hour)
+    toTimestamp = toTimestamp.Round(24 * time.Hour).Add(time.Hour)
     json.Unmarshal([]byte(body), &result)
     timeSeries := result[timeSeriesLabel].(map[string]any)
+    // -2 days to account for weekends
+    earlierFromTimestamp := fromTimestamp.AddDate(0, 0, -2)
     for date, priceMap := range timeSeries {
         timestamp, err := time.Parse(time.DateOnly, date)
         if err != nil {
             return nil, err
         }
 
-        if !slices.Contains(timestamps, timestamp) {
+        if timestamp.Before(earlierFromTimestamp) || timestamp.After(toTimestamp) {
             continue
         }
 
@@ -103,5 +108,49 @@ func (p *PriceApi) GetDailyPrices(
         prices = append(prices, price)
     }
 
-    return prices, nil
+    prices = ffillPrices(prices, toTimestamp)
+
+    startIndex := 0
+    for _, price := range prices {
+        if price.TimestampUtc.Before(fromTimestamp) {
+            startIndex++
+        } else {
+            break
+        }
+    }
+
+    return prices[startIndex:], nil
+}
+
+func ffillPrices(prices []app.Price, toTimestamp time.Time) []app.Price {
+    app.SortPrices(prices)
+    prevPrice := prices[0]
+    nextTimestamp := prices[0].TimestampUtc.AddDate(0, 0, 1)
+    filledPrices := []app.Price{}
+    for _, price := range prices[1:] {
+        for price.TimestampUtc.After(nextTimestamp) {
+            filledPrices = append(filledPrices, app.Price{
+                AssetSymbol: prevPrice.AssetSymbol,
+                TimestampUtc: nextTimestamp,
+                ValueUsd: prevPrice.ValueUsd,
+            })
+            nextTimestamp = nextTimestamp.AddDate(0, 0, 1)
+        }
+
+        filledPrices = append(filledPrices, price)
+        nextTimestamp = nextTimestamp.AddDate(0, 0, 1)
+        prevPrice = price
+    }
+
+    for prevPrice.TimestampUtc.Before(toTimestamp) {
+        filledPrices = append(filledPrices, app.Price{
+            AssetSymbol: prevPrice.AssetSymbol,
+            TimestampUtc: nextTimestamp,
+            ValueUsd: prevPrice.ValueUsd,
+        })
+        nextTimestamp = nextTimestamp.AddDate(0, 0, 1)
+        prevPrice = filledPrices[len(filledPrices) - 1]
+    }
+
+    return filledPrices
 }

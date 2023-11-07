@@ -7,6 +7,7 @@ import (
 
 	"github.com/MatteoDep/wealtheye/app"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/exp/slices"
 )
 
 type Service struct {
@@ -71,33 +72,32 @@ func (s *Service) GetPrices(
         toTimestampUtc,
     )
 
-    pricesToAppend, err := s.PA.GetDailyPrices(asset, missingTimestamps)
-    if err != nil {
-        return prices, err
-    }
-    for _, timestamp := range missingTimestamps {
-        var dayShift int
-        if timestamp.Weekday() == time.Saturday{
-            dayShift = -1
-        }
-        if timestamp.Weekday() == time.Sunday {
-            dayShift = -2
-        }
-        price, err := s.GetPrice(asset, timestamp.AddDate(0, 0, dayShift))
+    if len(missingTimestamps) > 0 {
+        app.SortTimestamp(missingTimestamps)
+        newPrices, err := s.PA.GetDailyPricesUsd(
+            asset,
+            missingTimestamps[0],
+            missingTimestamps[len(missingTimestamps)-1],
+        )
         if err != nil {
             return prices, err
         }
-        pricesToAppend = append(pricesToAppend, price)
+
+        missingPrices := []app.Price{}
+        for _, price := range newPrices {
+            if slices.Contains(missingTimestamps, price.TimestampUtc) {
+                prices = append(prices, price)
+                missingPrices = append(missingPrices, price)
+            }
+        }
+
+        err = s.Rep.PostPrices(missingPrices)
+        if err != nil {
+            log.Println("Error during prices insert.", err)
+        }
     }
 
-
-    prices = append(prices, pricesToAppend...)
     app.SortPrices(prices)
-
-    err = s.Rep.PostPrices(pricesToAppend)
-    if err != nil {
-        log.Println("Error during prices insert.", err)
-    }
 
 	return prices, nil
 }

@@ -45,5 +45,5 @@ type Service interface {
 }
 
 type PriceApi interface {
-	GetDailyPrices(asset Asset, timestamps []time.Time) ([]Price, error)
+	GetDailyPricesUsd(asset Asset, fromTimestamp time.Time, toTimestamp time.Time) ([]Price, error)
 }
