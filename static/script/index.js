@@ -1,11 +1,10 @@
-if (modal !== undefined) {
+
+showModal = () => {
     const modal = htmx.find("#modal")
+    modal.style.display = "flex"
+}
 
-    showModal = () => {
-        modal.style.display = "flex"
-    }
-
-    hideModal = () => {
-        modal.style.display = "none"
-    }
+hideModal = () => {
+    const modal = htmx.find("#modal")
+    modal.style.display = "none"
 }
