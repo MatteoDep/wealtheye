@@ -153,13 +153,6 @@ func (r *Repository) PostPrices(prices []app.Price) error {
     INSERT INTO price_daily (asset_symbol, timestamp_utc, value_usd)
     VALUES ($1, $2, $3);
     `
-    updateStr := `
-    UPDATE asset
-    SET
-        value_usd = $3,
-        last_synched = $2
-    WHERE symbol = $1;
-    `
     for _, price := range prices {
         _, err := r.DB.Exec(
             insertStr,
@@ -170,18 +163,26 @@ func (r *Repository) PostPrices(prices []app.Price) error {
         if err != nil {
             return err
         }
+    }
+    return nil
+}
 
-        now := time.Now().UTC()
-        if now.Sub(price.TimestampUtc).Abs().Hours() < 24 {
-            _, err := r.DB.Exec(
-                updateStr,
-                price.AssetSymbol,
-                now,
-                price.ValueUsd,
-            )
-            if err != nil {
-                return err
-            }
+func (r *Repository) UpdatePricesValue(prices []app.Price) error {
+    insertStr := `
+    UPDATE price_daily
+    SET value_usd = $1
+    WHERE asset_symbol = $2
+    AND timestamp_utc = $3;
+    `
+    for _, price := range prices {
+        _, err := r.DB.Exec(
+            insertStr,
+            price.ValueUsd,
+            price.AssetSymbol,
+            price.TimestampUtc,
+        )
+        if err != nil {
+            return err
         }
     }
     return nil

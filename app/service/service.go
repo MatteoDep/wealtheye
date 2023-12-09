@@ -2,12 +2,10 @@ package service
 
 import (
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
 	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/exp/slices"
 )
 
 type Service struct {
@@ -64,37 +62,6 @@ func (s *Service) GetPrices(
     prices, err := s.Rep.GetPrices(asset, fromTimestampUtc, toTimestampUtc)
     if err != nil {
         return prices, err
-    }
-
-    missingTimestamps := app.GetMissingTimestamps(
-        prices,
-        fromTimestampUtc,
-        toTimestampUtc,
-    )
-
-    if len(missingTimestamps) > 0 {
-        app.SortTimestamp(missingTimestamps)
-        newPrices, err := s.PA.GetDailyPricesUsd(
-            asset,
-            missingTimestamps[0],
-            missingTimestamps[len(missingTimestamps)-1],
-        )
-        if err != nil {
-            return prices, err
-        }
-
-        missingPrices := []app.Price{}
-        for _, price := range newPrices {
-            if slices.Contains(missingTimestamps, price.TimestampUtc) {
-                prices = append(prices, price)
-                missingPrices = append(missingPrices, price)
-            }
-        }
-
-        err = s.Rep.PostPrices(missingPrices)
-        if err != nil {
-            log.Println("Error during prices insert.", err)
-        }
     }
 
     app.SortPrices(prices)

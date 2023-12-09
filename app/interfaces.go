@@ -10,6 +10,7 @@ type Repository interface {
 	GetPrices(asset Asset, fromTimestampUtc time.Time, toTimestampUtc time.Time) ([]Price, error)
 	GetPrice(asset Asset, timestampUtc time.Time) (Price, error)
 	PostPrices(prices []Price) error
+	UpdatePricesValue(prices []Price) error
 
 	GetWallets() ([]Wallet, error)
 	GetWallet(id int) (Wallet, error)

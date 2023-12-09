@@ -27,20 +27,23 @@ func GetMissingTimestamps(
     toTimestamp = toTimestamp.Round(24 * time.Hour)
 
     // todo: use lookup table
-    found := false
     for ts := fromTimestamp; ts.Before(toTimestamp); ts = ts.AddDate(0, 0, 1) {
-        for _, price := range prices {
-            if price.TimestampUtc.Equal(ts) {
-                found = true
-                break
-            }
-        }
-
-        if found {
-            found = false
-        } else {
+        if GetPriceAtTimestamp(prices, ts) == nil {
             missingTimestamps = append(missingTimestamps, ts)
         }
     }
     return missingTimestamps
+}
+
+func GetPriceAtTimestamp(
+    prices []Price,
+    timestampUtc time.Time,
+) *Price {
+    for _, price := range prices {
+        if price.TimestampUtc.Equal(timestampUtc) {
+            return &price
+        }
+    }
+
+    return nil
 }

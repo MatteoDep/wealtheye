@@ -9,6 +9,7 @@ import (
 	"github.com/MatteoDep/wealtheye/app/priceapi"
 	"github.com/MatteoDep/wealtheye/app/repository"
 	"github.com/MatteoDep/wealtheye/app/service"
+	"github.com/MatteoDep/wealtheye/app/sync"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,8 +17,10 @@ import (
 
 
 func main() {
-    var cfg app.Config
-    app.GetConfig(&cfg)
+    cfg, err := app.GetConfig()
+    if err != nil {
+        log.Fatal(err)
+    }
 
     const dbfile string = "db/dashboard.db"
 
@@ -31,13 +34,18 @@ func main() {
         DB: db,
     }
 
-    pa := priceapi.PriceApi{
-        Cfg: &cfg,
+    pa := priceapi.GetPriceApi(&cfg.PriceApi)
+
+    sm := sync.SyncManager{
+        Rep: &rep,
+        PA: pa,
+        Cfg: &cfg.Sync,
     }
+    sm.Start()
 
     svc := service.Service{
         Rep: &rep,
-        PA: &pa,
+        PA: pa,
     }
 
     h := handler.Handler{
