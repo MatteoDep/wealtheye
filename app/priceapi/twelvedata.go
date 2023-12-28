@@ -2,8 +2,8 @@ package priceapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,11 +12,11 @@ import (
 	"github.com/MatteoDep/wealtheye/app"
 )
 
-type AlphaVantageApi struct {
+type TwelveDataApi struct {
 	Cfg *app.PriceApiConfig
 }
 
-func (p *AlphaVantageApi) GetDailyPricesUsd(
+func (p *TwelveDataApi) GetDailyPricesUsd(
     asset app.Asset,
     fromTimestamp time.Time,
     toTimestamp time.Time,
@@ -25,22 +25,15 @@ func (p *AlphaVantageApi) GetDailyPricesUsd(
         return nil, nil
     }
 
-    var priceLabel string
-    timeSeriesLabel := "Time Series "
-	reqUrl := "https://www.alphavantage.co/query"
+	reqUrl := "https://api.twelvedata.com/time_series"
+    var symbol string
     switch asset.Type {
     case "forex":
-        reqUrl += "?function=FX_DAILY&from_symbol=" + asset.Symbol
-        reqUrl += "&to_symbol=USD"
-        priceLabel = "4. close"
-        timeSeriesLabel += "FX (Daily)"
+        symbol = asset.Symbol + "/USD"
     case "crypto":
-        reqUrl += "?function=DIGITAL_CURRENCY_DAILY&symbol=" + asset.Symbol
-        reqUrl += "&market=USD"
-        priceLabel = "4a. close (USD)"
-        timeSeriesLabel += "(Digital Currency Daily)"
+        symbol = asset.Symbol + "/USD"
     case "stock":
-        return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        symbol = asset.Symbol
     case "commodity":
         return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
     case "bond":
@@ -50,6 +43,11 @@ func (p *AlphaVantageApi) GetDailyPricesUsd(
     default:
         return nil, UndefinedAssetTypeError{asset: &asset}
     }
+	reqUrl += "?symbol=" + symbol
+	reqUrl += "&interval=1day"
+	reqUrl += "&timezone=UTC"
+	reqUrl += "&start_date=" + fromTimestamp.Format(time.DateOnly)
+	reqUrl += "&end_date=" + toTimestamp.Format(time.DateOnly)
 	reqUrl += "&apikey=" + p.Cfg.Key
 
 	req, err := http.NewRequest("GET", reqUrl, nil)
@@ -69,28 +67,23 @@ func (p *AlphaVantageApi) GetDailyPricesUsd(
 	}
 
     var result map[string]any
-    fromTimestamp = fromTimestamp.Round(24 * time.Hour)
-    toTimestamp = toTimestamp.Round(24 * time.Hour)
     json.Unmarshal([]byte(body), &result)
-    if result[timeSeriesLabel] == nil {
-        return nil, fmt.Errorf("Error occured while retrieving data. %s returned %v.", p.Cfg.Provider, result)
+    if result["values"] == nil {
+        log.Printf("No Prices found for %s from %v to %v.", asset.Symbol, fromTimestamp, toTimestamp)
+        return nil, nil
     }
-    timeSeries := result[timeSeriesLabel].(map[string]any)
-    // -2 days to account for weekends
-    earlierFromTimestamp := fromTimestamp.AddDate(0, 0, -2)
+    timeSeries := result["values"].([]any)
     prices := []app.Price{}
-    for date, priceMap := range timeSeries {
-        timestamp, err := time.Parse(time.DateOnly, date)
+    var priceRecord map[string]any
+    for _, priceRecord_ := range timeSeries {
+        priceRecord = priceRecord_.(map[string]any)
+        timestamp, err := time.Parse(time.DateOnly, priceRecord["datetime"].(string))
         if err != nil {
             return nil, err
         }
 
-        if timestamp.Before(earlierFromTimestamp) || timestamp.After(toTimestamp) {
-            continue
-        }
-
         value, err := strconv.ParseFloat(
-            priceMap.(map[string]any)[priceLabel].(string),
+            priceRecord["close"].(string),
             64,
         )
         if err != nil {
@@ -104,16 +97,5 @@ func (p *AlphaVantageApi) GetDailyPricesUsd(
         prices = append(prices, price)
     }
 
-    prices = ffillPrices(prices, toTimestamp)
-
-    startIndex := 0
-    for _, price := range prices {
-        if price.TimestampUtc.Before(fromTimestamp) {
-            startIndex++
-        } else {
-            break
-        }
-    }
-
-    return prices[startIndex:], nil
+    return prices, nil
 }

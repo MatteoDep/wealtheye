@@ -22,13 +22,13 @@ func (s *Service) GetAsset(symbol string) (app.Asset, error) {
 }
 
 func (s *Service) GetPrice(
-    asset app.Asset,
+    symbol string,
     timestampUtc time.Time,
 ) (app.Price, error) {
     dayStart := timestampUtc.Truncate(24 * time.Hour)
-    prices, err := s.GetPrices(asset, dayStart, timestampUtc)
+    prices, err := s.GetPrices(symbol, dayStart, timestampUtc)
     if len(prices) < 1 {
-        prices, err = s.GetPrices(asset, dayStart.AddDate(0, 0, -1), dayStart)
+        prices, err = s.GetPrices(symbol, dayStart.AddDate(0, 0, -1), dayStart)
     }
     if err != nil || len(prices) < 1 {
         return app.Price{}, err
@@ -37,29 +37,11 @@ func (s *Service) GetPrice(
 }
 
 func (s *Service) GetPrices(
-    asset app.Asset,
+    symbol string,
     fromTimestampUtc time.Time,
     toTimestampUtc time.Time,
 ) ([]app.Price, error) {
-    if asset.Symbol == "USD" {
-        prices := []app.Price{}
-        timestamps := app.GetMissingTimestamps(
-            prices,
-            fromTimestampUtc,
-            toTimestampUtc,
-        )
-        for _, timestamp := range timestamps {
-            prices = append(prices, app.Price{
-                AssetSymbol: asset.Symbol,
-                TimestampUtc: timestamp,
-                ValueUsd: 1,
-            })
-        }
-
-        return prices, nil
-    }
-
-    prices, err := s.Rep.GetPrices(asset, fromTimestampUtc, toTimestampUtc)
+    prices, err := s.Rep.GetPrices(symbol, fromTimestampUtc, toTimestampUtc)
     if err != nil {
         return prices, err
     }
@@ -107,7 +89,7 @@ func (s *Service) UpdateWalletValue(id int) (error) {
 
     var valueUsd float64 = 0
     for _, transfer := range transfers {
-        ammountUsd, err := s.Convert(transfer.Ammount, transfer.AssetSymbol, "USD")
+        ammountUsd, err := s.Convert(transfer.Ammount, transfer.AssetSymbol, "USD", transfer.TimestampUtc)
         if err != nil {
             return err
         }

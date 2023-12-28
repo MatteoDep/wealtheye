@@ -3,7 +3,7 @@ BEGIN TRANSACTION;
 CREATE TABLE asset (
 	symbol TEXT PRIMARY KEY,
 	name TEXT NOT NULL,
-	type TEXT NOT NULL -- 'forex', 'crypto', 'stock', 'commodity', 'bond'
+	type TEXT NOT NULL -- 'forex', 'crypto', 'stock', 'commodity', 'bond', 'etf'
 );
 CREATE TABLE wallet(
 	id INTEGER PRIMARY KEY,

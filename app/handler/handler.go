@@ -100,7 +100,7 @@ func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
 	}
     today := time.Now().UTC().Round(24 * time.Hour)
     prices, err := h.Svc.GetPrices(
-        asset,
+        asset.Symbol,
         today.AddDate(0, -1, 0),
         today,
     )

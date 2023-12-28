@@ -69,50 +69,40 @@ func (r *Repository) GetAsset(symbol string) (app.Asset, error) {
 	return asset, nil
 }
 
-func (r *Repository) UpdateAssetValue(symbol string, valueUsd float64, lastSynched time.Time) (error) {
-    updateStr := `
-        UPDATE asset
-        SET
-            value_usd = $1,
-            last_synched = $2
-        WHERE
-            symbol = $3;
+func (r *Repository) GetLastPriceTimestamp(
+    symbol string,
+) (time.Time, error) {
+	queryStr := `
+        SELECT rtrim(rtrim(max(timestamp_utc), '0:'), '+')
+        FROM price_daily
+        WHERE asset_symbol = $1;
     `
-    _, err := r.DB.Exec(
-        updateStr,
-        valueUsd,
-        lastSynched,
-        symbol,
-    )
-    if err != nil {
-        return err
-    }
-    return nil
-}
+	row := r.DB.QueryRow(queryStr, symbol)
 
-func (r *Repository) GetPrice(
-    asset app.Asset,
-    timestampUtc time.Time,
-) (app.Price, error) {
-    dayStart := timestampUtc.Truncate(24 * time.Hour)
-    dayEnd := dayStart.AddDate(0, 0, 1)
-    prices, err := r.GetPrices(asset, dayStart, dayEnd)
-    if err != nil || len(prices) < 1 {
-        return app.Price{}, err
-    }
-    return prices[0], nil
+	var timestampString string
+	err := row.Scan(
+        &timestampString,
+	)
+	if err != nil {
+		return time.Time{}, err
+	}
+    timestamp, err := time.Parse(time.DateTime, timestampString)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if err := row.Err(); err != nil {
+		return timestamp, err
+	}
+
+	return timestamp, nil
 }
 
 func (r *Repository) GetPrices(
-    asset app.Asset,
+    symbol string,
     fromTimestampUtc time.Time,
     toTimestampUtc time.Time,
 ) ([]app.Price, error) {
-    prices := []app.Price{}
-    if asset.Symbol == "USD" || toTimestampUtc.Sub(fromTimestampUtc) < 24 * time.Hour {
-        return prices, nil
-    }
-
 	queryStr := `
         SELECT *
         FROM price_daily
@@ -121,13 +111,14 @@ func (r *Repository) GetPrices(
         AND timestamp_utc <= $3
         ORDER BY timestamp_utc;
     `
-	rows, err := r.DB.Query(queryStr, asset.Symbol, fromTimestampUtc, toTimestampUtc)
+	rows, err := r.DB.Query(queryStr, symbol, fromTimestampUtc, toTimestampUtc)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
     var price app.Price
+    prices := []app.Price{}
 	for rows.Next() {
 		err := rows.Scan(
 			&price.Id,

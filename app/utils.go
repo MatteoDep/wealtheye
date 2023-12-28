@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"sort"
 	"time"
 )
@@ -17,6 +18,31 @@ func SortPrices(prices []Price) {
     })
 }
 
+func GetPriceMostIdx(prices []Price, rel func(int, int) bool) (int, error) {
+    if len(prices) == 0 {
+        return 0, fmt.Errorf("Cannot get any value from empty price slice.")
+    }
+    most := 0
+    for i := range prices {
+        if rel(i, most) {
+            most = i
+        }
+    }
+    return most, nil
+}
+
+func GetOldestPriceIdx(prices []Price) (int, error) {
+    return GetPriceMostIdx(prices, func(i, j int) bool {
+        return prices[i].TimestampUtc.Before(prices[j].TimestampUtc)
+    })
+}
+
+func GetNewestPriceIdx(prices []Price) (int, error) {
+    return GetPriceMostIdx(prices, func(i, j int) bool {
+        return prices[i].TimestampUtc.After(prices[j].TimestampUtc)
+    })
+}
+
 func GetMissingTimestamps(
     prices []Price,
     fromTimestamp time.Time,
@@ -28,22 +54,22 @@ func GetMissingTimestamps(
 
     // todo: use lookup table
     for ts := fromTimestamp; ts.Before(toTimestamp); ts = ts.AddDate(0, 0, 1) {
-        if GetPriceAtTimestamp(prices, ts) == nil {
+        if _, err := GetPriceAtTimestampIdx(prices, ts); err != nil {
             missingTimestamps = append(missingTimestamps, ts)
         }
     }
     return missingTimestamps
 }
 
-func GetPriceAtTimestamp(
+func GetPriceAtTimestampIdx(
     prices []Price,
     timestampUtc time.Time,
-) *Price {
-    for _, price := range prices {
+) (int, error) {
+    for i, price := range prices {
         if price.TimestampUtc.Equal(timestampUtc) {
-            return &price
+            return i, nil
         }
     }
 
-    return nil
+    return 0, fmt.Errorf("Could not find time stamp %v in prices %v", timestampUtc, prices)
 }

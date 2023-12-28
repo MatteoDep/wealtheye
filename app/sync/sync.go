@@ -21,8 +21,15 @@ func (sm *SyncManager) Start() error {
 
     for true {
         for _, asset := range assets {
-            log.Println(asset.Name)
-            sm.syncAssetPrices(asset)
+            if asset.Symbol == "USD" {
+                continue
+            }
+            log.Println("Started synching", asset.Name)
+            err := sm.syncAssetPrices(asset)
+            if err != nil {
+                log.Println("Sync Error:", err)
+            }
+            log.Println("Done synching", asset.Name)
         }
 
         time.Sleep(sm.Cfg.WaitingTime)
@@ -33,13 +40,13 @@ func (sm *SyncManager) Start() error {
 func (sm *SyncManager) syncAssetPrices(asset app.Asset) error {
 	fromTimestampUtc := sm.Cfg.StartTimestamp
 	toTimestampUtc := time.Now().UTC()
-    log.Println(fromTimestampUtc, toTimestampUtc)
+	if lastTimestamp, err := sm.Rep.GetLastPriceTimestamp(asset.Symbol); err == nil {
+        fromTimestampUtc = lastTimestamp
+	} else {
+        log.Println("Error getting last price timestamp:", err)
+    }
 
-	prices, err := sm.Rep.GetPrices(asset, fromTimestampUtc, toTimestampUtc)
-	if err != nil {
-		return err
-	}
-
+    log.Printf("Getting updated prices from %v to %v.\n", fromTimestampUtc, toTimestampUtc)
 	newPrices, err := sm.PA.GetDailyPricesUsd(
 		asset,
 		fromTimestampUtc,
@@ -53,12 +60,11 @@ func (sm *SyncManager) syncAssetPrices(asset app.Asset) error {
 	missingPrices := []app.Price{}
 	changedPrices := []app.Price{}
 	for _, price := range newPrices {
-		existentPrice := app.GetPriceAtTimestamp(prices, price.TimestampUtc)
-		if existentPrice == nil {
-			missingPrices = append(missingPrices, price)
-		} else if price.ValueUsd == existentPrice.ValueUsd {
+		if price.TimestampUtc == fromTimestampUtc {
 			changedPrices = append(changedPrices, price)
-		}
+		} else {
+			missingPrices = append(missingPrices, price)
+        }
 	}
 
 	log.Println("Adding prices:", missingPrices)
@@ -68,7 +74,7 @@ func (sm *SyncManager) syncAssetPrices(asset app.Asset) error {
 	}
 
 	log.Println("Updating prices:", changedPrices)
-	err = sm.Rep.PostPrices(changedPrices)
+	err = sm.Rep.UpdatePricesValue(changedPrices)
 	if err != nil {
 		return err
 	}

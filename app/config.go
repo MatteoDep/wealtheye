@@ -42,8 +42,8 @@ var configKeys = []ConfigKey{
 
 var defaults = map[ConfigKey]string{
     PriceApiProvider: "alphavantage",
-    SyncStartTimestamp: "2023-12-01",
-    SyncWaitingTime: "5s",
+    SyncStartTimestamp: "2000-01-01",
+    SyncWaitingTime: "1h",
 }
 
 func GetConfig() (*Config, error) {

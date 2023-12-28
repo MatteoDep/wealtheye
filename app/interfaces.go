@@ -5,10 +5,9 @@ import "time"
 type Repository interface {
 	GetAssets() ([]Asset, error)
 	GetAsset(symbol string) (Asset, error)
-    UpdateAssetValue(symbol string, valueUsd float64, lastSynched time.Time) (error)
 
-	GetPrices(asset Asset, fromTimestampUtc time.Time, toTimestampUtc time.Time) ([]Price, error)
-	GetPrice(asset Asset, timestampUtc time.Time) (Price, error)
+	GetLastPriceTimestamp(symbol string) (time.Time, error)
+	GetPrices(symbol string, fromTimestampUtc time.Time, toTimestampUtc time.Time) ([]Price, error)
 	PostPrices(prices []Price) error
 	UpdatePricesValue(prices []Price) error
 
@@ -27,8 +26,8 @@ type Repository interface {
 type Service interface {
     GetAssets() ([]Asset, error)
     GetAsset(symbol string) (Asset, error)
-    GetPrice(asset Asset, timestampUtc time.Time) (Price, error)
-    GetPrices(asset Asset, fromTimestampUtc time.Time, toTimestampUtc time.Time) ([]Price, error)
+    GetPrice(symbol string, timestampUtc time.Time) (Price, error)
+    GetPrices(symbol string, fromTimestampUtc time.Time, toTimestampUtc time.Time) ([]Price, error)
     GetWallets() ([]Wallet, error)
     GetWallet(id int) (Wallet, error)
     GetTransfers() ([]Transfer, error)

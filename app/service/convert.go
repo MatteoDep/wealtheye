@@ -5,7 +5,7 @@ import (
 )
 
 
-func (s *Service) Convert(ammount float64, fromAssetSymbol string, toAssetSymbol string) (float64, error) {
+func (s *Service) Convert(ammount float64, fromAssetSymbol string, toAssetSymbol string, timestamp time.Time) (float64, error) {
     fromAsset, err := s.GetAsset(fromAssetSymbol)
     if err != nil {
         return 0, err
@@ -15,11 +15,11 @@ func (s *Service) Convert(ammount float64, fromAssetSymbol string, toAssetSymbol
         return 0, err
     }
 
-    fromAssetPrice, err := s.GetPrice(fromAsset, time.Now().UTC())
+    fromAssetPrice, err := s.GetPrice(fromAsset.Symbol, timestamp)
     if err != nil {
         return 0, err
     }
-    toAssetPrice, err := s.GetPrice(toAsset, time.Now().UTC())
+    toAssetPrice, err := s.GetPrice(toAsset.Symbol, timestamp)
     if err != nil {
         return 0, err
     }

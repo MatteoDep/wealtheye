@@ -41,7 +41,7 @@ func main() {
         PA: pa,
         Cfg: &cfg.Sync,
     }
-    sm.Start()
+    go sm.Start()
 
     svc := service.Service{
         Rep: &rep,
