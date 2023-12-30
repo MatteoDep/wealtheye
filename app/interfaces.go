@@ -26,7 +26,7 @@ type Repository interface {
 type Service interface {
     GetAssets() ([]Asset, error)
     GetAsset(symbol string) (Asset, error)
-    GetPrice(symbol string, timestampUtc time.Time) (Price, error)
+    GetPrice(symbol string, timestampUtc time.Time) (*Price, error)
     GetPrices(symbol string, fromTimestampUtc time.Time, toTimestampUtc time.Time) ([]Price, error)
     GetWallets() ([]Wallet, error)
     GetWallet(id int) (Wallet, error)

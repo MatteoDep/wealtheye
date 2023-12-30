@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -24,6 +25,9 @@ func (s *Service) Convert(ammount float64, fromAssetSymbol string, toAssetSymbol
         return 0, err
     }
 
+    if fromAssetPrice.ValueUsd == 0 {
+        return 0, fmt.Errorf("Zero division: %s price is zero so could not perform the conversion.", fromAssetSymbol)
+    }
     convertedAmmount := ammount * toAssetPrice.ValueUsd / fromAssetPrice.ValueUsd
 
     return convertedAmmount, nil

@@ -2,6 +2,8 @@ package service
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
@@ -24,16 +26,26 @@ func (s *Service) GetAsset(symbol string) (app.Asset, error) {
 func (s *Service) GetPrice(
     symbol string,
     timestampUtc time.Time,
-) (app.Price, error) {
+) (*app.Price, error) {
+    if symbol == "USD" {
+        return &app.Price{
+            AssetSymbol: symbol,
+            ValueUsd: 1,
+            TimestampUtc: timestampUtc,
+        }, nil
+    }
     dayStart := timestampUtc.Truncate(24 * time.Hour)
     prices, err := s.GetPrices(symbol, dayStart, timestampUtc)
     if len(prices) < 1 {
         prices, err = s.GetPrices(symbol, dayStart.AddDate(0, 0, -1), dayStart)
     }
-    if err != nil || len(prices) < 1 {
-        return app.Price{}, err
+    if err != nil {
+        return nil, err
     }
-    return prices[0], nil
+    if len(prices) < 1 {
+        return nil, fmt.Errorf("No prices found for %s", symbol)
+    }
+    return &prices[0], nil
 }
 
 func (s *Service) GetPrices(
@@ -41,6 +53,20 @@ func (s *Service) GetPrices(
     fromTimestampUtc time.Time,
     toTimestampUtc time.Time,
 ) ([]app.Price, error) {
+    if symbol == "USD" {
+        return []app.Price{
+            {
+                AssetSymbol: symbol,
+                ValueUsd: 1,
+                TimestampUtc: fromTimestampUtc,
+            },
+            {
+                AssetSymbol: symbol,
+                ValueUsd: 1,
+                TimestampUtc: toTimestampUtc,
+            },
+        }, nil
+    }
     prices, err := s.Rep.GetPrices(symbol, fromTimestampUtc, toTimestampUtc)
     if err != nil {
         return prices, err
@@ -86,6 +112,7 @@ func (s *Service) UpdateWalletValue(id int) (error) {
 	if err != nil {
 		return err
 	}
+    log.Println(transfers)
 
     var valueUsd float64 = 0
     for _, transfer := range transfers {
