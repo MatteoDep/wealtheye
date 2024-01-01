@@ -17,7 +17,7 @@ type TwelveDataApi struct {
 }
 
 func (p *TwelveDataApi) GetDailyPricesUsd(
-    asset app.Asset,
+    asset *app.Asset,
     fromTimestamp time.Time,
     toTimestamp time.Time,
 ) ([]app.Price, error) {
@@ -35,13 +35,13 @@ func (p *TwelveDataApi) GetDailyPricesUsd(
     case "stock":
         symbol = asset.Symbol
     case "commodity":
-        return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, NotImplementedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     case "bond":
-        return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, NotImplementedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     case "etf":
-        return nil, UnsupportedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, UnsupportedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     default:
-        return nil, UndefinedAssetTypeError{asset: &asset}
+        return nil, UndefinedAssetTypeError{asset: asset}
     }
 	reqUrl += "?symbol=" + symbol
 	reqUrl += "&interval=1day"

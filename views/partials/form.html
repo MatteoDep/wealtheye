@@ -1,0 +1,13 @@
+{{define "modal"}}
+<div id="modal" class="modal">
+  <div id="underlay" class="modal-underlay" hx-on:click="hideModal()"></div>
+  <div id="dialog" class="modal-dialog"></div>
+</div>
+{{end}}
+
+{{define "form-buttons"}}
+<div class="form-buttons">
+  <button class="form-button" type="submit" hx-on:click="hideModal()">Submit</button>
+  <button class="form-button" type="button" hx-on:click="hideModal()">Cancel</button>
+</div>
+{{end}}

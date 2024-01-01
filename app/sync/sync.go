@@ -14,18 +14,18 @@ type SyncManager struct {
 }
 
 func (sm *SyncManager) Start() error {
-	assets, err := sm.Rep.GetAssets()
-	if err != nil {
-		return err
-	}
-
     for true {
+        assets, err := sm.Rep.GetAssets()
+        if err != nil {
+            return err
+        }
+
         for _, asset := range assets {
             if asset.Symbol == "USD" {
                 continue
             }
             log.Println("Started synching", asset.Name)
-            err := sm.syncAssetPrices(asset)
+            err := sm.syncAssetPrices(&asset)
             if err != nil {
                 log.Println("Sync Error:", err)
             }
@@ -37,7 +37,7 @@ func (sm *SyncManager) Start() error {
 	return nil
 }
 
-func (sm *SyncManager) syncAssetPrices(asset app.Asset) error {
+func (sm *SyncManager) syncAssetPrices(asset *app.Asset) error {
 	fromTimestampUtc := sm.Cfg.StartTimestamp
 	toTimestampUtc := time.Now().UTC()
 	if lastTimestamp, err := sm.Rep.GetLastPriceTimestamp(asset.Symbol); err == nil {

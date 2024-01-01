@@ -1,0 +1,18 @@
+{{block "assets-selection" .}}
+{{if .AssetSelectionGet}}
+<select name="AssetSymbol" hx-get="{{.AssetSelectionGet}}" hx-target="{{.AssetSelectionTarget}}" hx-trigger="change, load"
+        hx-indicator="#spinner">
+{{else}}
+<select name="AssetSymbol">
+{{end}}
+  {{range .Assets}}
+  {{template "asset-option" .}}
+  {{end}}
+</select>
+<div id="balance-plot" class="chart"></div>
+<img  id="spinner" class="htmx-indicator" src="/static/img/spinner.svg"/>
+{{end}}
+
+{{block "asset-option" .}}
+<option value="{{.Symbol}}">{{.Symbol}}</option>
+{{end}}

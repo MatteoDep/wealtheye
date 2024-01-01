@@ -44,7 +44,7 @@ func (r *Repository) GetAssets() ([]app.Asset, error) {
 	return assets, nil
 }
 
-func (r *Repository) GetAsset(symbol string) (app.Asset, error) {
+func (r *Repository) GetAsset(symbol string) (*app.Asset, error) {
 	queryStr := `
         SELECT *
         FROM asset
@@ -59,14 +59,14 @@ func (r *Repository) GetAsset(symbol string) (app.Asset, error) {
         &asset.Type,
 	)
 	if err != nil {
-		return asset, err
+		return nil, err
 	}
 
 	if err := row.Err(); err != nil {
-		return asset, err
+		return nil, err
 	}
 
-	return asset, nil
+	return &asset, nil
 }
 
 func (r *Repository) GetLastPriceTimestamp(
@@ -211,7 +211,7 @@ func (r *Repository) GetWallets() ([]app.Wallet, error) {
 	return wallets, nil
 }
 
-func (r *Repository) GetWallet(id int) (app.Wallet, error) {
+func (r *Repository) GetWallet(id int) (*app.Wallet, error) {
 	queryStr := `
         SELECT *
         FROM wallet
@@ -226,14 +226,14 @@ func (r *Repository) GetWallet(id int) (app.Wallet, error) {
 		&wallet.ValueUsd,
 	)
 	if err != nil {
-		return wallet, err
+		return nil, err
 	}
 
 	if err := row.Err(); err != nil {
-		return wallet, err
+		return nil, err
 	}
 
-	return wallet, nil
+	return &wallet, nil
 }
 
 func (r *Repository) PostWallet(name string) error {
@@ -361,7 +361,7 @@ func (r *Repository) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
 	return transfers, nil
 }
 
-func (r *Repository) PostTransfer(transfer app.Transfer) error {
+func (r *Repository) PostTransfer(transfer *app.Transfer) error {
     insertStr := `
     INSERT INTO transfer (ammount, from_wallet_id, to_wallet_id, asset_symbol)
     VALUES ($1, $2, $3, $4);
@@ -379,7 +379,7 @@ func (r *Repository) PostTransfer(transfer app.Transfer) error {
     return nil
 }
 
-func (r *Repository) UpdateTransfer(transfer app.Transfer) error {
+func (r *Repository) UpdateTransfer(transfer *app.Transfer) error {
     updateStr := `
     UPDATE transfer
     SET

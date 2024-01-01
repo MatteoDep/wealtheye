@@ -1,0 +1,22 @@
+{{block "wallet-form-create" .}}
+<form class="modal-content" hx-post="/wallet" hx-target="#dialog" hx-swap="innerHTML">
+  {{template "wallet-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-form-edit" .}}
+<form class="modal-content" hx-put="/wallet/{{.Wallet.Id}}" hx-target="#dialog" hx-swap="innerHTML">
+  {{template "wallet-form-content" .}}
+</form>
+{{end}}
+
+{{block "wallet-form-content" .}}
+<div class="form-fields">
+  <div class="form-field">
+    <label for="name" class="one-quarter">Wallet Name:</label>
+    <div class="gap"></div>
+    <input type="text" name="Name" value="{{.Wallet.Name}}" class="three-quarters">
+  </div>
+</div>
+{{template "form-buttons"}}
+{{end}}

@@ -16,8 +16,9 @@ type AlphaVantageApi struct {
 	Cfg *app.PriceApiConfig
 }
 
+// TODO align with twelvedata implementation
 func (p *AlphaVantageApi) GetDailyPricesUsd(
-    asset app.Asset,
+    asset *app.Asset,
     fromTimestamp time.Time,
     toTimestamp time.Time,
 ) ([]app.Price, error) {
@@ -40,15 +41,15 @@ func (p *AlphaVantageApi) GetDailyPricesUsd(
         priceLabel = "4a. close (USD)"
         timeSeriesLabel += "(Digital Currency Daily)"
     case "stock":
-        return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, NotImplementedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     case "commodity":
-        return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, NotImplementedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     case "bond":
-        return nil, NotImplementedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, NotImplementedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     case "etf":
-        return nil, UnsupportedAssetTypeError{asset: &asset, provider: p.Cfg.Provider}
+        return nil, UnsupportedAssetTypeError{asset: asset, provider: p.Cfg.Provider}
     default:
-        return nil, UndefinedAssetTypeError{asset: &asset}
+        return nil, UndefinedAssetTypeError{asset: asset}
     }
 	reqUrl += "&apikey=" + p.Cfg.Key
 

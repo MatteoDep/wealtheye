@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"time"
@@ -33,19 +34,24 @@ func (h *Handler) ServeHoldingsPage(c *fiber.Ctx) error {
 
 	assets, err := h.Svc.GetAssets()
 	if err != nil {
+        log.Println(err)
         return fmt.Errorf("On GetAssets: %s.", err.Error())
 	}
     err = h.Svc.UpdateWalletsValue()
 	if err != nil {
+        log.Println(err)
         return fmt.Errorf("On UpdateWalletsValue: %s.", err.Error())
 	}
     wallets, err := h.Svc.GetWallets()
 	if err != nil {
+        log.Println(err)
         return fmt.Errorf("On GetWallets: %s.", err.Error())
 	}
 
 	return c.Render("landing-page", fiber.Map{
 		"Assets": assets,
+        "AssetSelectionGet": "/plot",
+        "AssetSelectionTarget": "#balance-plot",
         "Wallets": wallets,
 	})
 }
@@ -79,11 +85,11 @@ func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
 
     walletTransfersDTO := []app.WalletTransferDTO{}
     for _, transfer := range transfers {
-        walletTransferDTO, err := h.Svc.TransferToWalletTransferDTO(transfer, walletId)
+        walletTransferDTO, err := h.Svc.TransferToWalletTransferDTO(&transfer, walletId)
         if err != nil {
             return fmt.Errorf("On TransferToWalletTransferDTO: %s.", err.Error())
         }
-        walletTransfersDTO = append(walletTransfersDTO, walletTransferDTO)
+        walletTransfersDTO = append(walletTransfersDTO, *walletTransferDTO)
     }
 
 	return c.Render("wallet-page", fiber.Map{
@@ -93,7 +99,7 @@ func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
 }
 
 func (h *Handler) ServeBalancePlot(c *fiber.Ctx) error {
-    assetSymbol := c.Query("symbol")
+    assetSymbol := c.Query("AssetSymbol")
 	asset, err := h.Svc.GetAsset(assetSymbol)
 	if err != nil {
 		return err
@@ -194,10 +200,16 @@ func (h *Handler) ServeWalletTransferCreateForm(c *fiber.Ctx) error {
             otherWallets = append(otherWallets, wallet)
         }
     }
+
+    assets, err := h.Svc.GetAssets()
+    if err != nil {
+        return err
+    }
+
 	return c.Render("wallet-transfer-create", fiber.Map{
         "WalletId": walletId,
         "Ammount": 0,
-        "AssetSymbol": "USD",
+        "Assets": assets,
         "Types": []app.WalletTransferType{
             app.Deposit,
             app.Withdrawal,
@@ -247,7 +259,7 @@ func (h *Handler) ServePostWalletTransfer(c *fiber.Ctx) error {
         return err
     }
 
-    transfer, err := h.Svc.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
+    transfer, err := h.Svc.WalletTransferDTOToTransfer(walletTrasferDTO, walletId)
     if err := h.Svc.PostTransfer(transfer); err != nil {
         return err
     }
@@ -266,7 +278,7 @@ func (h *Handler) ServePutWalletTransfer(c *fiber.Ctx) error {
         return err
     }
 
-    transfer, err := h.Svc.WalletTransferDTOToTransfer(*walletTrasferDTO, walletId)
+    transfer, err := h.Svc.WalletTransferDTOToTransfer(walletTrasferDTO, walletId)
     if err := h.Svc.UpdateTransfer(transfer); err != nil {
         return err
     }

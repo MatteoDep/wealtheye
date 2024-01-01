@@ -3,7 +3,6 @@ package service
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
@@ -19,7 +18,7 @@ func (s *Service) GetAssets() ([]app.Asset, error) {
     return s.Rep.GetAssets()
 }
 
-func (s *Service) GetAsset(symbol string) (app.Asset, error) {
+func (s *Service) GetAsset(symbol string) (*app.Asset, error) {
     return s.Rep.GetAsset(symbol)
 }
 
@@ -81,7 +80,7 @@ func (s *Service) GetWallets() ([]app.Wallet, error) {
     return s.Rep.GetWallets()
 }
 
-func (s *Service) GetWallet(id int) (app.Wallet, error) {
+func (s *Service) GetWallet(id int) (*app.Wallet, error) {
     return s.Rep.GetWallet(id)
 }
 
@@ -112,7 +111,6 @@ func (s *Service) UpdateWalletValue(id int) (error) {
 	if err != nil {
 		return err
 	}
-    log.Println(transfers)
 
     var valueUsd float64 = 0
     for _, transfer := range transfers {
@@ -138,15 +136,15 @@ func (s *Service) PostWallet(name string) (error) {
     return s.Rep.PostWallet(name)
 }
 
-func (s *Service) PostTransfer(transfer app.Transfer) (error) {
+func (s *Service) PostTransfer(transfer *app.Transfer) (error) {
     return s.Rep.PostTransfer(transfer)
 }
 
-func (s *Service) UpdateTransfer(transfer app.Transfer) (error) {
+func (s *Service) UpdateTransfer(transfer *app.Transfer) (error) {
     return s.Rep.UpdateTransfer(transfer)
 }
 
-func (s *Service) TransferToWalletTransferDTO(transfer app.Transfer, walletId int) (app.WalletTransferDTO, error) {
+func (s *Service) TransferToWalletTransferDTO(transfer *app.Transfer, walletId int) (*app.WalletTransferDTO, error) {
     walletTransferDTO := app.WalletTransferDTO{}
     walletTransferDTO.Timestamp = transfer.TimestampUtc.Local()
     walletTransferDTO.Ammount = transfer.Ammount
@@ -175,21 +173,20 @@ func (s *Service) TransferToWalletTransferDTO(transfer app.Transfer, walletId in
     } else {
         otherWallet, err := s.GetWallet(otherWalletId)
         if err != nil {
-            return walletTransferDTO, err
+            return nil, err
         }
         walletTransferDTO.OtherWalletName = otherWallet.Name
     }
 
 
-    return walletTransferDTO, nil
+    return &walletTransferDTO, nil
 }
 
-func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransferDTO, walletId int) (app.Transfer, error) {
+func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO *app.WalletTransferDTO, walletId int) (*app.Transfer, error) {
     transfer := app.Transfer{}
     transfer.TimestampUtc = walletTransferDTO.Timestamp.UTC()
     transfer.Ammount = walletTransferDTO.Ammount
-    // transfer.AssetSymbol = walletTransferDTO.AssetSymbol
-    transfer.AssetSymbol = "USD"
+    transfer.AssetSymbol = walletTransferDTO.AssetSymbol
 
     var otherWalletId sql.NullInt64
     if walletTransferDTO.OtherWalletId == -1 {
@@ -216,7 +213,7 @@ func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO app.WalletTransf
         transfer.ToWalletId = otherWalletId
     }
 
-    return transfer, nil
+    return &transfer, nil
 }
 
 func (s *Service) GetExternalWalletName(walletTransferType app.WalletTransferType) string {

@@ -61,7 +61,7 @@ func main() {
 
 	app.Get("/", h.ServeIndex)
 	app.Get("/landing-page", h.ServeHoldingsPage)
-    app.Get("/plot:symbol?", h.ServeBalancePlot)
+    app.Get("/plot:AssetSymbol?", h.ServeBalancePlot)
     app.Get("/wallet-page/:walletId", h.ServeWalletPage)
     app.Get("/wallet-info-card/:walletId", h.ServeWalletInfoCard)
     app.Get("/wallet-create-form", h.ServeWalletCreateForm)

@@ -1,40 +1,3 @@
-{{define "modal"}}
-<div id="modal" class="modal">
-  <div id="underlay" class="modal-underlay" hx-on:click="hideModal()"></div>
-  <div id="dialog" class="modal-dialog"></div>
-</div>
-{{end}}
-
-{{define "form-buttons"}}
-<div class="form-buttons">
-  <button class="form-button" type="submit" hx-on:click="hideModal()">Submit</button>
-  <button class="form-button" type="button" hx-on:click="hideModal()">Cancel</button>
-</div>
-{{end}}
-
-{{block "wallet-form-create" .}}
-<form class="modal-content" hx-post="/wallet" hx-target="#dialog" hx-swap="innerHTML">
-  {{template "wallet-form-content" .}}
-</form>
-{{end}}
-
-{{block "wallet-form-edit" .}}
-<form class="modal-content" hx-put="/wallet/{{.Wallet.Id}}" hx-target="#dialog" hx-swap="innerHTML">
-  {{template "wallet-form-content" .}}
-</form>
-{{end}}
-
-{{block "wallet-form-content" .}}
-<div class="form-fields">
-  <div class="form-field">
-    <label for="name" class="one-quarter">Wallet Name:</label>
-    <div class="gap"></div>
-    <input type="text" name="Name" value="{{.Wallet.Name}}" class="three-quarters">
-  </div>
-</div>
-{{template "form-buttons"}}
-{{end}}
-
 {{block "wallet-transfer-create" .}}
 <form class="modal-content" hx-post="/wallet-transfer/{{.WalletId}}" hx-target="#dialog" hx-swap="innerHTML">
   {{template "wallet-transfer-form-content" .}}
@@ -75,9 +38,7 @@
     <label for="ammount" class="one-quarter">Ammount:</label>
     <div class="gap"></div>
     <input type="number" id="ammount" name="Ammount" value="{{.Ammount}}" class="three-quarters">
-    $
-    <!-- todo: select asset -->
-    <!-- {{template "assets-selection" .}} -->
+    {{template "assets-selection" .}}
   </div>
 </div>
 {{template "form-buttons"}}

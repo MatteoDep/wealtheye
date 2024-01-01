@@ -21,21 +21,6 @@
 </p>
 {{end}}
 
-{{block "assets-selection" .}}
-<select name="symbol" hx-get="/plot" hx-target="#balance-plot" hx-trigger="change, load"
-        hx-indicator="#spinner">
-  {{range .Assets}}
-  {{template "asset-option" .}}
-  {{end}}
-</select>
-<div id="balance-plot" class="chart"></div>
-<img  id="spinner" class="htmx-indicator" src="/static/img/spinner.svg"/>
-{{end}}
-
-{{block "asset-option" .}}
-<option value="{{.Symbol}}">{{.Symbol}}</option>
-{{end}}
-
 {{block "balance-plot" .}}
 <div id="balance-plot" class="chart">
   <br>
