@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/MatteoDep/wealtheye/app"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Service struct {
