@@ -50,9 +50,7 @@ func GetConfig() (*Config, error) {
 	cfg := Config{}
 	envmap := map[ConfigKey]string{}
 	readEnviron(envmap)
-    fmt.Println(envmap)
 	readDotenv(envmap)
-    fmt.Println(envmap)
 	for k, v := range envmap {
 		if v == "" {
             if val, ok := defaults[k]; ok {
@@ -80,7 +78,6 @@ func GetConfig() (*Config, error) {
 			cfg.Sync.WaitingTime = duration
 		}
 	}
-    fmt.Println(cfg)
 	return &cfg, nil
 }
 

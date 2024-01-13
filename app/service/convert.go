@@ -26,7 +26,7 @@ func (s *Service) Convert(ammount float64, fromAssetSymbol string, toAssetSymbol
     }
 
     if toAssetPrice.ValueUsd == 0 {
-        return 0, fmt.Errorf("Zero division: %s price is zero so could not perform the conversion.", toAssetPrice)
+        return 0, fmt.Errorf("Zero division: %s price is zero so could not perform the conversion.", toAssetPrice.AssetSymbol)
     }
     convertedAmmount := ammount * fromAssetPrice.ValueUsd / toAssetPrice.ValueUsd
 

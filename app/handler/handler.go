@@ -59,6 +59,7 @@ func (h *Handler) ServeHoldingsPage(c *fiber.Ctx) error {
 func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
     walletId, err := strconv.Atoi(c.Params("walletId"))
 	if err != nil {
+        log.Println(err)
 		return err
 	}
 
@@ -71,22 +72,29 @@ func (h *Handler) ServeWalletPage(c *fiber.Ctx) error {
 
     err = h.Svc.UpdateWalletValue(walletId)
     if err != nil {
-        return fmt.Errorf("On UpdateWalletValue: %s.", err.Error())
+        err = fmt.Errorf("On UpdateWalletValue: %s.", err.Error())
+        log.Println(err)
+        return err
     }
 
     wallet, err := h.Svc.GetWallet(walletId)
 	if err != nil {
-        return fmt.Errorf("On GetWallet: %s.", err.Error())
+        err = fmt.Errorf("On GetWallet: %s.", err.Error())
+        log.Println(err)
+        return err
 	}
     transfers, err := h.Svc.GetWalletTransfers(walletId)
 	if err != nil {
-        return fmt.Errorf("On GetWalletTransfers: %s.", err.Error())
+        err = fmt.Errorf("On GetWalletTransfers: %s.", err.Error())
+        log.Println(err)
+        return err
 	}
 
     walletTransfersDTO := []app.WalletTransferDTO{}
     for _, transfer := range transfers {
         walletTransferDTO, err := h.Svc.TransferToWalletTransferDTO(&transfer, walletId)
         if err != nil {
+            log.Println(err)
             return fmt.Errorf("On TransferToWalletTransferDTO: %s.", err.Error())
         }
         walletTransfersDTO = append(walletTransfersDTO, *walletTransferDTO)
@@ -218,6 +226,93 @@ func (h *Handler) ServeWalletTransferCreateForm(c *fiber.Ctx) error {
 	})
 }
 
+func (h *Handler) ServeWalletTransferEditForm(c *fiber.Ctx) error {
+    walletId, err := strconv.Atoi(c.Params("walletId"))
+    if err != nil {
+        return err
+    }
+    transferId, err := strconv.Atoi(c.Query("TransferId", "-1"))
+    if err != nil {
+        return err
+    }
+    if transferId == -1 {
+        return fmt.Errorf("No transferId was provided.")
+    }
+
+    transfer, err := h.Svc.GetTransfer(transferId)
+    if err != nil {
+        return err
+    }
+    walletTransfer, err := h.Svc.TransferToWalletTransferDTO(transfer, walletId)
+    if err != nil {
+        return err
+    }
+
+    wallets, err := h.Svc.GetWallets()
+    if err != nil {
+        return err
+    }
+
+    otherWallets := []app.Wallet{}
+    var wallet_tmp app.Wallet
+    for i, wallet := range wallets {
+        if wallet.Id != walletId {
+            otherWallets = append(otherWallets, wallet)
+        }
+        if wallet.Id == walletTransfer.OtherWalletId {
+            wallet_tmp = wallets[0]
+            wallets[0] = wallet
+            wallets[i] = wallet_tmp
+        }
+    }
+
+    assets, err := h.Svc.GetAssets()
+    if err != nil {
+        return err
+    }
+    var asset_tmp app.Asset
+    for i, asset := range assets {
+        if asset.Symbol == walletTransfer.AssetSymbol {
+            asset_tmp = assets[0]
+            assets[0] = asset
+            assets[i] = asset_tmp
+        }
+    }
+
+    var types []app.WalletTransferType = make([]app.WalletTransferType, 2)
+    if walletTransfer.Type == app.Deposit {
+        types[0] = app.Deposit
+        types[1] = app.Withdrawal
+    } else {
+        types[0] = app.Withdrawal
+        types[1] = app.Deposit
+    }
+
+	return c.Render("wallet-transfer-edit", fiber.Map{
+        "TransferId": transferId,
+        "WalletId": walletId,
+        "Ammount": walletTransfer.Ammount,
+        "Assets": assets,
+        "Types": types,
+        "Wallets": otherWallets,
+	})
+}
+
+func (h *Handler) ServeTransferDeleteForm(c *fiber.Ctx) error {
+    transferId, err := strconv.Atoi(c.Params("transferId"))
+    if err != nil {
+        return err
+    }
+
+    message := "Do you really want to delete transfer?"
+    endPoint := fmt.Sprintf("/transfer/%d", transferId)
+
+	return c.Render("confirmation-form", fiber.Map{
+        "Message": message,
+        "EndPoint": endPoint,
+	})
+}
+
 func (h *Handler) ServePostWallet(c *fiber.Ctx) error {
     wallet := new(app.Wallet)
     if err := c.BodyParser(wallet); err != nil {
@@ -227,7 +322,7 @@ func (h *Handler) ServePostWallet(c *fiber.Ctx) error {
         return err
     }
 
-    c.Set("HX-Trigger-After-Swap", "walletCreated")
+    c.Set("HX-Trigger-After-Swap", "walletReload")
     return nil
 }
 
@@ -245,7 +340,25 @@ func (h *Handler) ServePutWallet(c *fiber.Ctx) error {
     if err := h.Svc.UpdateWalletName(wallet.Id, wallet.Name); err != nil {
         return err
     }
-    c.Set("HX-Trigger-After-Swap", "walletEdited")
+    c.Set("HX-Trigger-After-Swap", "walletReload")
+    return nil
+}
+
+func (h *Handler) ServeDeleteWallet(c *fiber.Ctx) error {
+    // walletId, err := strconv.Atoi(c.Params("walletId"))
+    // if err != nil {
+    //     return err
+    // }
+    //
+    // wallet := new(app.Wallet)
+    // if err := c.BodyParser(wallet); err != nil {
+    //     return err
+    // }
+    // wallet.Id = walletId
+    // if err := h.Svc.UpdateWalletName(wallet.Id, wallet.Name); err != nil {
+    //     return err
+    // }
+    // c.Set("HX-Trigger-After-Swap", "walletReload")
     return nil
 }
 
@@ -255,16 +368,18 @@ func (h *Handler) ServePostWalletTransfer(c *fiber.Ctx) error {
         return err
     }
     walletTrasferDTO := new(app.WalletTransferDTO)
-    if err := c.BodyParser(walletTrasferDTO); err != nil {
+    err = c.BodyParser(walletTrasferDTO)
+    if err != nil {
         return err
     }
+    walletTrasferDTO.WalletId = walletId
 
-    transfer, err := h.Svc.WalletTransferDTOToTransfer(walletTrasferDTO, walletId)
+    transfer, err := h.Svc.WalletTransferDTOToTransfer(walletTrasferDTO)
     if err := h.Svc.PostTransfer(transfer); err != nil {
         return err
     }
 
-    c.Set("HX-Trigger-After-Swap", "walletTransferCreated")
+    c.Set("HX-Trigger-After-Swap", "walletReload")
     return nil
 }
 
@@ -273,17 +388,43 @@ func (h *Handler) ServePutWalletTransfer(c *fiber.Ctx) error {
     if err != nil {
         return err
     }
-    walletTrasferDTO := new(app.WalletTransferDTO)
-    if err := c.BodyParser(walletTrasferDTO); err != nil {
+    transferId, err := strconv.Atoi(c.Query("TransferId", "-1"))
+    if err != nil {
         return err
     }
+    if transferId == -1 {
+        return fmt.Errorf("No transferId was provided.")
+    }
 
-    transfer, err := h.Svc.WalletTransferDTOToTransfer(walletTrasferDTO, walletId)
+    walletTrasferDTO := new(app.WalletTransferDTO)
+    err = c.BodyParser(walletTrasferDTO)
+    if err != nil {
+        return err
+    }
+    walletTrasferDTO.WalletId = walletId
+
+    transfer, err := h.Svc.WalletTransferDTOToTransfer(walletTrasferDTO)
+    transfer.Id = transferId
     if err := h.Svc.UpdateTransfer(transfer); err != nil {
         return err
     }
 
-    c.Set("HX-Trigger-After-Swap", "walletTransferEdited")
+    c.Set("HX-Trigger-After-Swap", "walletReload")
+    return nil
+}
+
+func (h *Handler) ServeDeleteTransfer(c *fiber.Ctx) error {
+    transferId, err := strconv.Atoi(c.Params("transferId"))
+    if err != nil {
+        return err
+    }
+
+    err = h.Svc.DeleteTransfer(transferId)
+    if err != nil {
+        return err
+    }
+
+    c.Set("HX-Trigger-After-Swap", "walletReload")
     return nil
 }
 

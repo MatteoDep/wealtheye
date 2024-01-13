@@ -5,7 +5,7 @@
 {{end}}
 
 {{block "wallet-transfer-edit" .}}
-<form class="modal-content" hx-put="/wallet-transfer/{{.WalletId}}" hx-target="#dialog" hx-swap="innerHTML">
+<form class="modal-content" hx-put="/wallet-transfer/{{.WalletId}}?TransferId={{.TransferId}}" hx-target="#dialog" hx-swap="innerHTML">
   {{template "wallet-transfer-form-content" .}}
 </form>
 {{end}}

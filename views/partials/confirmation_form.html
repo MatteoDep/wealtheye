@@ -1,0 +1,14 @@
+{{block "confirmation-form" .}}
+<form class="modal-content">
+  {{.Message}}
+  {{template "confirmation-form-buttons" .}}
+</form>
+{{end}}
+
+{{define "confirmation-form-buttons"}}
+<div class="form-buttons">
+  <button class="form-button" type="button" hx-on:click="hideModal()"
+          hx-delete="{{.EndPoint}}" hx-target="#dialog" hx-swap="innerHTML">Confirm</button>
+  <button class="form-button" type="button" hx-on:click="hideModal()">Cancel</button>
+</div>
+{{end}}

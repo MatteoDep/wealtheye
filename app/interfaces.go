@@ -18,9 +18,11 @@ type Repository interface {
 	UpdateWalletValue(id int, valueUsd float64) error
 
     GetTransfers() ([]Transfer, error)
+    GetTransfer(id int) (*Transfer, error)
     GetWalletTransfers(walletId int) ([]Transfer, error)
     PostTransfer(transfer *Transfer) error
     UpdateTransfer(transfer *Transfer) error
+    DeleteTransfer(transferId int) error
 }
 
 type Service interface {
@@ -31,6 +33,7 @@ type Service interface {
     GetWallets() ([]Wallet, error)
     GetWallet(id int) (*Wallet, error)
     GetTransfers() ([]Transfer, error)
+    GetTransfer(id int) (*Transfer, error)
     GetWalletTransfers(walletId int) ([]Transfer, error)
     UpdateWalletsValue() (error)
     UpdateWalletValue(id int) (error)
@@ -38,9 +41,10 @@ type Service interface {
 	PostWallet(name string) error
     PostTransfer(transfer *Transfer) error
     UpdateTransfer(transfer *Transfer) error
+    DeleteTransfer(transferId int) error
 
     TransferToWalletTransferDTO(transfer *Transfer, walletId int) (*WalletTransferDTO, error)
-    WalletTransferDTOToTransfer(walletTransferDTO *WalletTransferDTO, walletId int) (*Transfer, error)
+    WalletTransferDTOToTransfer(walletTransferDTO *WalletTransferDTO) (*Transfer, error)
     GetExternalWalletName(walletTransferType WalletTransferType) string
 }
 

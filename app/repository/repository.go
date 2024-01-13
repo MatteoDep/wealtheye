@@ -291,7 +291,7 @@ func (r *Repository) UpdateWalletValue(id int, valueUsd float64) error {
 
 func (r *Repository) GetTransfers() ([]app.Transfer, error) {
 	queryStr := `
-        SELECT *
+        SELECT id, timestamp_utc, ammount, asset_symbol, from_wallet_id, to_wallet_id
         FROM transfer;
     `
 	rows, err := r.DB.Query(queryStr)
@@ -322,6 +322,34 @@ func (r *Repository) GetTransfers() ([]app.Transfer, error) {
 	}
 
 	return transfers, nil
+}
+
+func (r *Repository) GetTransfer(id int) (*app.Transfer, error) {
+	queryStr := `
+        SELECT id, timestamp_utc, ammount, asset_symbol, from_wallet_id, to_wallet_id
+        FROM transfer
+        WHERE id = $1
+    `
+	row := r.DB.QueryRow(queryStr, id)
+
+	var transfer app.Transfer
+	err := row.Scan(
+        &transfer.Id,
+        &transfer.TimestampUtc,
+        &transfer.Ammount,
+        &transfer.AssetSymbol,
+        &transfer.FromWalletId,
+        &transfer.ToWalletId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
+	return &transfer, nil
 }
 
 func (r *Repository) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
@@ -386,7 +414,8 @@ func (r *Repository) UpdateTransfer(transfer *app.Transfer) error {
         ammount = $1,
         from_wallet_id = $2,
         to_wallet_id = $3,
-        asset_symbol = $4;
+        asset_symbol = $4
+    WHERE id = $5;
     `
     _, err := r.DB.Exec(
         updateStr,
@@ -394,6 +423,22 @@ func (r *Repository) UpdateTransfer(transfer *app.Transfer) error {
         transfer.FromWalletId,
         transfer.ToWalletId,
         transfer.AssetSymbol,
+        transfer.Id,
+    )
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (r *Repository) DeleteTransfer(transferId int) error {
+    updateStr := `
+    DELETE FROM transfer
+    WHERE id = $1
+    `
+    _, err := r.DB.Exec(
+        updateStr,
+        transferId,
     )
     if err != nil {
         return err

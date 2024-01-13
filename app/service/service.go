@@ -84,7 +84,11 @@ func (s *Service) GetWallet(id int) (*app.Wallet, error) {
 }
 
 func (s *Service) GetTransfers() ([]app.Transfer, error) {
-    return s.GetTransfers()
+    return s.Rep.GetTransfers()
+}
+
+func (s *Service) GetTransfer(id int) (*app.Transfer, error) {
+    return s.Rep.GetTransfer(id)
 }
 
 func (s *Service) GetWalletTransfers(walletId int) ([]app.Transfer, error) {
@@ -143,8 +147,14 @@ func (s *Service) UpdateTransfer(transfer *app.Transfer) (error) {
     return s.Rep.UpdateTransfer(transfer)
 }
 
+func (s *Service) DeleteTransfer(transferId int) (error) {
+    return s.Rep.DeleteTransfer(transferId)
+}
+
 func (s *Service) TransferToWalletTransferDTO(transfer *app.Transfer, walletId int) (*app.WalletTransferDTO, error) {
     walletTransferDTO := app.WalletTransferDTO{}
+    walletTransferDTO.WalletId = walletId
+    walletTransferDTO.TransferId = transfer.Id
     walletTransferDTO.Timestamp = transfer.TimestampUtc.Local()
     walletTransferDTO.Ammount = transfer.Ammount
     walletTransferDTO.AssetSymbol = transfer.AssetSymbol
@@ -181,7 +191,7 @@ func (s *Service) TransferToWalletTransferDTO(transfer *app.Transfer, walletId i
     return &walletTransferDTO, nil
 }
 
-func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO *app.WalletTransferDTO, walletId int) (*app.Transfer, error) {
+func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO *app.WalletTransferDTO) (*app.Transfer, error) {
     transfer := app.Transfer{}
     transfer.TimestampUtc = walletTransferDTO.Timestamp.UTC()
     transfer.Ammount = walletTransferDTO.Ammount
@@ -201,12 +211,12 @@ func (s *Service) WalletTransferDTOToTransfer(walletTransferDTO *app.WalletTrans
     if walletTransferDTO.Type == app.Deposit {
         transfer.FromWalletId = otherWalletId
         transfer.ToWalletId = sql.NullInt64{
-            Int64: int64(walletId),
+            Int64: int64(walletTransferDTO.WalletId),
             Valid: true,
         }
     } else {
         transfer.FromWalletId = sql.NullInt64{
-            Int64: int64(walletId),
+            Int64: int64(walletTransferDTO.WalletId),
             Valid: true,
         }
         transfer.ToWalletId = otherWalletId

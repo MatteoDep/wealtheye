@@ -1,7 +1,7 @@
 {{block "wallet-page" .}}
 <div id="wallet-page"
      hx-get="/wallet-page/{{.Wallet.Id}}"
-     hx-trigger="walletEdited from:body, walletTransferCreated from:body, walletTransferEdited from:body"
+     hx-trigger="walletReload from:body"
      hx-swap="outerHTML">
   <div class="page-title">
     <h2>{{.Wallet.Name}}</h2>
@@ -55,6 +55,18 @@
   <td>{{.AssetSymbol}}</td>
   <td>
     {{.Type}} {{.OtherWalletName}}
+  </td>
+  <td>
+    <button class="clickable" hx-get="/wallet-transfer-edit-form/{{.WalletId}}?TransferId={{.TransferId}}" hx-target="#dialog" hx-on:click="showModal()"
+      hx-swap="innerHTML">
+      Edit
+    </button>
+  </td>
+  <td>
+    <button class="clickable" hx-get="/transfer-delete-form/{{.TransferId}}" hx-target="#dialog" hx-on:click="showModal()"
+      hx-swap="innerHTML">
+      Delete
+    </button>
   </td>
 </tr>
 {{end}}

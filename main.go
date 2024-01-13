@@ -69,8 +69,11 @@ func main() {
     app.Post("/wallet", h.ServePostWallet)
     app.Put("/wallet/:walletId", h.ServePutWallet)
     app.Get("/wallet-transfer-create-form/:walletId", h.ServeWalletTransferCreateForm)
+    app.Get("/wallet-transfer-edit-form/:walletId:TransferId?", h.ServeWalletTransferEditForm)
+    app.Get("/transfer-delete-form/:transferId", h.ServeTransferDeleteForm)
     app.Post("/wallet-transfer/:walletId", h.ServePostWalletTransfer)
-    app.Put("/wallet-transfer/:walletId", h.ServePutWalletTransfer)
+    app.Put("/wallet-transfer/:walletId:TransferId?", h.ServePutWalletTransfer)
+    app.Delete("/transfer/:transferId", h.ServeDeleteTransfer)
     app.Get("/external-wallet-name:Type?", h.GetExternalWalletName)
 
 	log.Fatal(app.Listen(":4242"))
